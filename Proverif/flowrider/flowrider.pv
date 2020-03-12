@@ -1,0 +1,133 @@
+(* 
+
+flowrider protocol
+
+Message 1: C -> S : (P)TCP
+Message 2: S -> Switch : (P)TCP
+Message 3: If flow not found : Switch -> Contoller : (Control message)
+Message 4: Controller -> C : {K}key
+Message 5: Controller -> S : {K}key
+Message 6: Controller -> Switch : (P+update)
+Message 7: Switch -> S : (P+update)
+Message 8: C -> S : { Message }K
+*)
+
+set ignoreTypes = attacker.
+
+type host.
+type key.
+type pkey.
+type skey.
+type spkey.
+type sskey.
+
+table flows(host, host, bool).
+table keys(host, host, key).
+
+(* Public key encryption *)
+
+fun pk(skey): pkey.
+fun encrypt(bitstring, pkey): bitstring.
+reduc forall x: bitstring, y: skey; decrypt(encrypt(x,pk(y)),y) = x.
+
+(* Signatures *)
+
+fun spk(sskey): spkey.
+fun sign(bitstring, sskey): bitstring.
+reduc forall m: bitstring, k: sskey; getmess(sign(m,k)) = m.
+reduc forall m: bitstring, k: sskey; checksign(sign(m,k), spk(k)) = m.
+
+(* Shared key encryption *)
+
+fun sencrypt(bitstring,key): bitstring.
+reduc forall x: bitstring, y: key; sdecrypt(sencrypt(x,y),y) = x.
+
+
+(* Shared key encryption for key *)
+
+fun sencryptkey(key,key): key.
+reduc forall x: key, y: key; sdecryptkey(sencryptkey(x,y),y) = x.
+
+(* Secrecy assumptions *)
+
+(* Queries *)
+
+free c : channel.
+free mm : bitstring  [private].
+free ini : bitstring. 
+query attacker ( mm ).
+
+event beginConn(host).
+event endConn(host).
+event beginupdate(host).
+event endupdate(host).
+event beginprovision(key , host).
+event endprivision(key , host).
+
+
+query x :host ; event(endConn(x)) ==> event(beginConn(x)).
+query x :host; inj-event(endupdate(x)) ==> inj-event(beginupdate(x)).
+query k: key, x :host; inj-event(endprivision(k,x)) ==> inj-event(beginprovision(k,x)).
+
+
+(* Switch *)
+(* Message 2 *)
+let switchS(k: key) =
+in( c , (ms:bitstring, Aa:host, Bb:host));
+(* Message 3  *)
+get flows(=Aa, =Bb, f) in
+if not(f) then 
+out ( c, (ms, Aa, Bb) );
+in( c, (P:bitstring, Aa:host, Bb:host));
+insert flows(Aa, Bb, true ).
+
+
+ 
+(* Controller *)
+let controllerC(k: key) =
+(* Message 3 *)
+in( c, (P:bitstring, Aa:host, Bb:host));
+new ke : key;
+out (c , sencryptkey ( ke , k ));
+insert keys(Aa,Bb, ke);
+event beginprovision(ke , Aa);
+event beginprovision(ke , Bb);
+event beginupdate(Bb);
+out( c, (P, Aa, Bb)).
+
+(* Server *)
+let serverS(k: key, Bb: host) =
+in( c , (mes : bitstring, Aa: host));
+(* Message 2 *)
+out ( c, (mes , Aa, Bb) );
+(* Message 4 *)
+in (c , x :key); 
+let z = sdecryptkey (x , k) in
+event endprivision(z , Bb);
+event endupdate(Bb);
+in (c , mn :bitstring); 
+let me = sdecrypt (mn , z) in
+event endConn(Aa).
+
+(* Client *)
+let clientC(k: key, Aa: host) =  
+(* Message 1 *)
+out( c , (ini , Aa));
+(* Message 5 *)
+in (c , x :key); 
+let z = sdecryptkey (x , k) in
+event endprivision(z , Aa);
+out ( c , sencrypt ( mm , z ));
+event beginConn(Aa).
+
+(* Start process *)
+process 
+      new kk : key;
+      new C : host;
+      new S : host;
+      (* Launch an unbounded number of sessions *)
+      (  ( ! clientC (kk, C))|( ! serverS (kk, S ))| ( ! controllerC (kk))|( ! switchS (kk))  )
+
+
+
+
