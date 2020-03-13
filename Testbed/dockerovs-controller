@@ -94,10 +94,10 @@ ip link add name "${HOST_IFNAME}" type veth peer name "${GUEST_IFNAME}"
 ip link set "${HOST_IFNAME}" up
 
 #---------------------------------------------------------------------------
-# Inject guest end of link into the container, as eth0
+# Inject guest end of link into the container, as eth1
 
 ip link set "${GUEST_IFNAME}" netns "${NSPID}"
-ip netns exec "${NSPID}" ip link set "${GUEST_IFNAME}" name eth0
+ip netns exec "${NSPID}" ip link set "${GUEST_IFNAME}" name eth1
 
 #---------------------------------------------------------------------------
 # Push the host end of the link into the Open vSwitch (optionally with a
@@ -112,8 +112,8 @@ fi
 #---------------------------------------------------------------------------
 # Configure networking inside the container
 
-ip netns exec "${NSPID}" ip addr add "${IP4_ADDR}" dev eth0
-ip netns exec "${NSPID}" ip link set eth0 up
+ip netns exec "${NSPID}" ip addr add "${IP4_ADDR}" dev eth1
+ip netns exec "${NSPID}" ip link set eth1 up
 
 # Do we need to set up lo?
 #ip netns exec "${NSPID}" ip addr add 127.0.0.1/8   dev lo
