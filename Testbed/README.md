@@ -1,5 +1,8 @@
-*Based on: https://ewen.mcneill.gen.nz/blog/entry/2014-10-07-ryu-and-openvswitch-on-docker/*
+*Based on:
+  https://ewen.mcneill.gen.nz/blog/entry/2014-10-07-ryu-and-openvswitch-on-docker/
+and  https://naos.co.nz/talks/seize-control-with-ryu/seize-control-with-ryu.pdf*
 
+  
 # Build Instructions
 
   **Building the Ryu base:**
