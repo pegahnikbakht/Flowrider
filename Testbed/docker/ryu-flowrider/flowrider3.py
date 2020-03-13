@@ -38,7 +38,9 @@ from ryu.controller         import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto            import ofproto_v1_3, ether, inet
-from ryu.lib.packet         import packet, ethernet
+from ryu.lib.packet         import packet, ethernet, ipv4
+import socket
+
 
 class KiwiPycon(app_manager.RyuApp):
   # Tell Ryu to only accept OpenFlow 1.3
@@ -161,7 +163,24 @@ class KiwiPycon(app_manager.RyuApp):
   def handle_packet(self, ev):
     pkt = packet.Packet(ev.msg.data) 
     eth = pkt.get_protocol(ethernet.ethernet)
+#    ipv4 = pkt.get_protocol(ipv4.ipv4)
+    self.logger.info("UDP received from %s" % pkt)
     self.logger.info("UDP received from %s" % eth.src)
     if ev.msg.data.find(KiwiPycon.MAGIC_COOKIE) >= 0:
       self.logger.info("Magic cookie found from %s" % eth.src)
       self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
+      self.send_key()
+
+   # Send key when triggered
+  def send_key(self):
+    HOST = '172.31.1.2'  # The server's hostname or IP address
+    PORT = 5000          # The port used by the server
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.logger.info("Connecting to the target")
+    s.connect((HOST, PORT))
+    self.logger.info("Sending key information to %s" % HOST)
+    s.sendall(b'Hello, world')
+    data = s.recv(1024)
+    self.logger.info("Received back data %s" % data)
+    print('Received', msg.decode('ascii'))
+    

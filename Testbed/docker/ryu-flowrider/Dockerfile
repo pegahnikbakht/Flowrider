@@ -21,6 +21,9 @@ MAINTAINER Nicolae Paladi <nicolae.paladi@eit.lth.se>
 # OpenFlow ports -- de facto (6633) and IANA assigned (6653)
 EXPOSE 6633 6653
 
+# Port for the OOB communication
+EXPOSE 5000 
+
 # Add Ryu user account
 RUN groupadd --system ryu
 RUN useradd  --system -d /home/ryu -m -s /bin/bash -g ryu ryu
