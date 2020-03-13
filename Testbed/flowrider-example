@@ -61,7 +61,7 @@ GUEST_2=$(ensure_guest_running flowrider_h2 "${IP4_PREFIX}.2/24")
 # Start the controller Ryu instance, auto-running ryu
 #CONTROLLER=$(ensure_controller_running controller "${IP4_PREFIX}.3/24")
 
-CONTROLLER=$(docker run -d -i -t --net=none -p 6633:6633 -p 6653:6653 -p 5000:5000 ryu-flowrider su -c "${RYU_MANAGER} ${RYU_APP}" ryu)
+CONTROLLER=$(docker run -d -i -t -p 6633:6633 -p 6653:6653 -p 5000:5000 ryu-flowrider su -c "${RYU_MANAGER} ${RYU_APP}" ryu)
 sudo "${CNETSETUP}" "${OVS_SWITCH}" "${CONTROLLER}" "${IP4_PREFIX}.3/24"
 
 docker attach "${CONTROLLER}"
