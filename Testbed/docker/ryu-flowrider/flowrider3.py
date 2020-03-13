@@ -48,7 +48,7 @@ class KiwiPycon(app_manager.RyuApp):
 
   # Internal constants for ports, priority, etc
   MAGIC_COOKIE                 = bytearray(b"xyzzy")
-  (PORT_H1, PORT_H2)           = (1,2)
+  (PORT_H1, PORT_H2, PORT_H3)           = (1,2,3)
   (PRI_LOW, PRI_MID, PRI_HIGH) = (20, 30, 40)
 
   # Minimal __init__
@@ -70,7 +70,7 @@ class KiwiPycon(app_manager.RyuApp):
                                 priority=priority,
                                 match=match, instructions=inst)
     dp.set_xid(mod)         # Preallocate transaction ID
-    dp.send_msg(mod)    
+    dp.send_msg(mod)
 
   # Helper to delete all flows (ie, reset to default)
   # (No filtering on delete, so deletes everything in table 0)
@@ -97,11 +97,11 @@ class KiwiPycon(app_manager.RyuApp):
 
     self.logger.info("Permitting ARP, by flooding")
     match   = parser.OFPMatch(eth_type = ether.ETH_TYPE_ARP)
-    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD, 
+    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, KiwiPycon.PRI_MID,
                   match, actions)
- 
+
   # Add override (high priority) to flood traffic from MAC
   def permit_traffic_from_mac(self, dp, src_mac):
     ofp    = dp.ofproto
@@ -109,7 +109,7 @@ class KiwiPycon(app_manager.RyuApp):
 
     self.logger.info("Permitting traffic from %s" % src_mac)
     match   = parser.OFPMatch(eth_src = src_mac)
-    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD, 
+    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, KiwiPycon.PRI_HIGH,
                   match, actions)
@@ -130,26 +130,34 @@ class KiwiPycon(app_manager.RyuApp):
 
     self.logger.info("Allowing traffic from h2's port by default")
     match   = parser.OFPMatch(in_port = KiwiPycon.PORT_H2)
-    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD, 
+    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, KiwiPycon.PRI_LOW,
                   match, actions)
+
+    self.logger.info("Allowing traffic from h3's port by default")
+    match   = parser.OFPMatch(in_port = KiwiPycon.PORT_H3)
+    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
+                                      ofp.OFPCML_NO_BUFFER)]
+    self.add_flow(dp, KiwiPycon.PRI_LOW,
+                  match, actions)
+
 
   # Ask switch to send us UDP packets from host 1
   def add_notify_on_udp_from_host_1(self, dp):
     ofp    = dp.ofproto
     parser = dp.ofproto_parser
-    
+
     self.logger.info("Request notify on UDP from h1")
     match   = parser.OFPMatch(in_port  = KiwiPycon.PORT_H1,
                               eth_type = ether.ETH_TYPE_IP,
                               ip_proto = inet.IPPROTO_UDP)
-    actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER, 
+    actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
                                       ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, KiwiPycon.PRI_MID,
                   match, actions)
-    
-  @set_ev_cls(ofp_event.EventOFPStateChange, 
+
+  @set_ev_cls(ofp_event.EventOFPStateChange,
               MAIN_DISPATCHER)
   def new_connection(self, ev):
     dp = ev.datapath
@@ -158,10 +166,10 @@ class KiwiPycon(app_manager.RyuApp):
     self.flood_all_arp(dp)
     self.add_notify_on_udp_from_host_1(dp)
 
-  @set_ev_cls(ofp_event.EventOFPPacketIn, 
+  @set_ev_cls(ofp_event.EventOFPPacketIn,
               MAIN_DISPATCHER)
   def handle_packet(self, ev):
-    pkt = packet.Packet(ev.msg.data) 
+    pkt = packet.Packet(ev.msg.data)
     eth = pkt.get_protocol(ethernet.ethernet)
 #    ipv4 = pkt.get_protocol(ipv4.ipv4)
     self.logger.info("UDP received from %s" % pkt)
@@ -183,4 +191,3 @@ class KiwiPycon(app_manager.RyuApp):
     data = s.recv(1024)
     self.logger.info("Received back data %s" % data)
     print('Received', msg.decode('ascii'))
-    
