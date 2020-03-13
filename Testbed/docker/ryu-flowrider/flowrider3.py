@@ -181,7 +181,7 @@ class KiwiPycon(app_manager.RyuApp):
 
    # Send key when triggered
   def send_key(self):
-    HOST = '172.31.1.1'  # The server's hostname or IP address
+    HOST = '172.31.1.2'  # The server's hostname or IP address
     PORT = 5000          # The port used by the server
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logger.info("Connecting to the target")
