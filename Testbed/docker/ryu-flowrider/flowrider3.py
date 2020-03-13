@@ -190,4 +190,4 @@ class KiwiPycon(app_manager.RyuApp):
     s.sendall(b'Hello, world')
     data = s.recv(1024)
     self.logger.info("Received back data %s" % data)
-    print('Received', msg.decode('ascii'))
+    print('Received', data.decode('ascii'))
