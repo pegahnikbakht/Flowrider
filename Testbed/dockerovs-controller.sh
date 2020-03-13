@@ -1,0 +1,124 @@
+#! /bin/sh
+# Connect Docker container to Open vSwitch bridge (auto-created if required)
+#
+# Inspired by:
+# http://fbevmware.blogspot.co.nz/2013/12/coupling-docker-and-open-vswitch.html
+#
+# and:
+# https://github.com/jpetazzo/pipework
+#
+# but stripped down for our use case, and with more string protection.
+#
+# Written by Nicolae Paladi <nicolae.paladi@ri.se>, 2020-03-13
+#----------------------------------------------------------------------------
+
+set -e            # Give up on errors
+
+PATH=/sbin:/usr/bin:/bin
+export PATH
+
+# WARNING! active connection is "tcp:IP:PORT", passive connection is
+# inexpecably "ptcp:PORT:IP"!
+#---------------------------------------------------------------------------
+# Parse arguments
+
+OVS_BRIDGE="$1"
+GUEST_NAME="$2"
+IP4_ADDR="$3"
+IP4_GW="$4"
+VLAN_TAG="$5"
+
+if [ -z "${OVS_BRIDGE}" -o -z "${GUEST_NAME}" -o -z "${IP4_ADDR}" ]; then
+  echo "Usage: OVS_BRIDGE GUEST_NAME IP4_ADDR [IP4_GW [VLANTAG]]" >&2
+  exit 1
+fi
+
+#---------------------------------------------------------------------------
+# Find container mount point, so we can determine network namespace
+
+CGROUP_MOUNT=$(grep -w devices /proc/mounts | awk '{ print $2; }')
+
+if [ -z "${CGROUP_MOUNT}" ]; then
+  echo "Error: could not auto-locate cgroup mount point" >&2
+  exit 1
+fi
+
+#echo "Found CGROUP MOUNT at: ${CGROUP_MOUNT}"
+
+#---------------------------------------------------------------------------
+# Find our container path
+
+CONTAINER=$(find "${CGROUP_MOUNT}" -name "${GUEST_NAME}*")
+if [ -z "${CONTAINER}" ]; then
+  echo "Error: no container found matching ${GUEST_NAME}" >&2
+  exit 1
+fi
+NUM_FOUND=$(echo "${CONTAINER}" | wc -l)
+if [ "${NUM_FOUND}" -eq 1 ]; then
+  :  # Expected
+else
+  echo "Error: multiple containers found matching ${GUEST_NAME}" >&2
+  exit 1
+fi
+
+#echo "Container found at: ${CONTAINER}"
+
+#---------------------------------------------------------------------------
+# Figure out the namespace PID
+
+NSPID=$(head -n 1 "${CONTAINER}/tasks")
+if [ -z "${NSPID}" ]; then
+  echo "Error: no tasks found in container ${GUEST_NAME}" >&2
+  exit 1
+fi
+
+#---------------------------------------------------------------------------
+# Prepare helper directory for "ip netns" support
+
+mkdir -p /var/run/netns
+rm -f "/var/run/netns/${NSPID}"
+ln -s "/proc/${NSPID}/ns/net" "/var/run/netns/${NSPID}"
+
+#---------------------------------------------------------------------------
+# Create link pair to connect between Open vSwitch and container
+# (removing it if it already exists)
+
+HOST_IFNAME="vethp${NSPID}"
+GUEST_IFNAME="vethg${NSPID}"
+
+if [ -n "$(ip link show "${HOST_IFNAME}" 2>/dev/null)" ]; then
+  ip link delete "${HOST_IFNAME}" type veth
+fi
+
+ip link add name "${HOST_IFNAME}" type veth peer name "${GUEST_IFNAME}"
+ip link set "${HOST_IFNAME}" up
+
+#---------------------------------------------------------------------------
+# Inject guest end of link into the container, as eth0
+
+ip link set "${GUEST_IFNAME}" netns "${NSPID}"
+ip netns exec "${NSPID}" ip link set "${GUEST_IFNAME}" name eth0
+
+#---------------------------------------------------------------------------
+# Push the host end of the link into the Open vSwitch (optionally with a
+# VLAN tag, as an access port)
+
+if [ -n "${VLAN_TAG}" ]; then
+  ovs-vsctl add-port "${OVS_BRIDGE}" "${HOST_IFNAME}" "tag=${VLANTAG}"
+else
+  ovs-vsctl add-port "${OVS_BRIDGE}" "${HOST_IFNAME}"
+fi
+
+#---------------------------------------------------------------------------
+# Configure networking inside the container
+
+ip netns exec "${NSPID}" ip addr add "${IP4_ADDR}" dev eth0
+ip netns exec "${NSPID}" ip link set eth0 up
+
+# Do we need to set up lo?
+#ip netns exec "${NSPID}" ip addr add 127.0.0.1/8   dev lo
+#ip netns exec "${NSPID}" ip link set lo   up
+
+if [ -n "${IP4_GW}" ]; then
+  ip netns exec "${NSPID}" ip route add default via "${IP4_GW}"
+fi
