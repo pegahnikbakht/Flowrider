@@ -4,7 +4,7 @@ import socket
 from socket import AF_INET, SOCK_STREAM, SO_REUSEADDR, SOL_SOCKET, SHUT_RDWR
 import ssl
 
-listen_addr = '127.0.0.1'
+listen_addr = '0.0.0.0'
 listen_port = 8082
 server_cert = 'server.crt'
 server_key = 'server.key'
