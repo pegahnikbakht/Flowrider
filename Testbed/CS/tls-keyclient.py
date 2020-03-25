@@ -1,17 +1,23 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 import socket
+import ssl
 
-HOST = '0.0.0.0'  # The server's hostname or IP address
-PORT = 5000        # The port used by the server
+host_addr = '127.0.0.1'
+host_port = 8082
+server_sni_hostname = 'example.com'
+server_cert = 'server.crt'
+client_cert = 'client.crt'
+client_key = 'client.key'
+
+context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=server_cert)
+context.load_cert_chain(certfile=client_cert, keyfile=client_key)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((HOST, PORT))
-print("Sending key information to %s" % HOST)
-s.sendall(b'Hello, world')
-data = s.recv(1024)
-print("Received back data %s" % data)
-print('Received', data.decode('ascii'))
-
-
-
+conn = context.wrap_socket(s, server_side=False, server_hostname=server_sni_hostname)
+conn.connect((host_addr, host_port))
+print("SSL established. Peer: {}".format(conn.getpeercert()))
+print("Sending: 'Hello, world!")
+conn.send(b"Hello, world!")
+print("Closing connection")
+conn.close()
