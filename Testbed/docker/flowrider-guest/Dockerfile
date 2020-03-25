@@ -10,21 +10,16 @@ RUN apk add  iputils net-tools
 RUN apk add --no-cache bash
 
 
-# Add Endpoint user account
-RUN groupadd --system endpoint
-RUN useradd  --system -d /home/endpoint -m -s /bin/bash -g endpoint endpoint
-
-
 # Add clientTLS application and data into container
-ADD tls-keyclient.py /home/endpoint/tls-keyclient.py
-ADD certs/client.crt /home/endpoint/client.crt
-ADD certs/client.key /home/endpoint/client.key
+COPY tls-keyclient.py
+COPY certs/client.crt
+COPY certs/client.key
 
 
 # Add serverTLS application into container
-ADD tls-keyserver.py /home/endpoint/tls-keysever.py
-ADD certs/server.crt /home/endpoint/server.crt
-ADD certs/server.key /home/endpoint/server.key
+COPY tls-keyserver.py
+COPY certs/server.crt
+COPY certs/server.key
 
 
 RUN pip install -r requirements.txt
