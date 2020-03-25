@@ -10,18 +10,9 @@ RUN apk add  iputils net-tools
 RUN apk add --no-cache bash
 
 
-# Add clientTLS application and data into container
-COPY tls-keyclient.py
-COPY certs/client.crt
-COPY certs/client.key
+# Add application and data into container
+COPY . /endpoint
 
-
-# Add serverTLS application into container
-COPY tls-keyserver.py
-COPY certs/server.crt
-COPY certs/server.key
-
-
-RUN pip install -r requirements.txt
+#RUN pip install -r requirements.txt
 EXPOSE 5000
 EXPOSE 8082
