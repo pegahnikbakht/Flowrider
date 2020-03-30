@@ -1,0 +1,67 @@
+#! /bin/sh
+# Start Open vSwitch guests
+#
+# Written by Ewen McNeill <ewen@naos.co.nz>, 2014-10-06
+# Updated by Ewen McNeill <ewen@naos.co.nz>, 2014-10-07
+#---------------------------------------------------------------------------
+
+set -e
+
+PATH=/usr/bin:/bin
+export PATH
+
+BIN_DIR=$(dirname $0)
+if [ -z "${BIN_DIR}" ]; then BIN_DIR="."; fi
+case "${BIN_DIR}" in
+  .)  BIN_DIR="$(pwd)";            ;;
+  /*)                              ;;
+  *)  BIN_DIR="$(pwd)/${BIN_DIR}"; ;;
+esac
+
+NETSETUP="${NETSETUP:-${BIN_DIR}/dockerovs}"
+CNETSETUP="${CNETSETUP:-${BIN_DIR}/dockerovs-controller}"
+OVS_SWITCH="${OVS_SWITCH:-flowrider}"
+IP4_PREFIX="${IP4_PREFIX:-172.31.1}"
+RYU_MANAGER="${RYU_MANAGER:-/usr/local/bin/ryu-manager}"
+RYU_APP="${RYU_APP:-/home/ryu/flowrider3.py}"
+GUEST_IMAGE="${GUEST_IMAGE:-flowrider-guest}"
+CONTROLLER_IMAGE="${CONTROLLER_IMAGE:-ryu-flowrider}"
+
+ensure_guest_running() {
+    NAME="$1"
+    IP="$2"
+    EXISTING_GUEST=$(docker ps -a |
+                     awk 'substr($0,139) ~ '"/${NAME}"'/ { print $1;}')
+    if [ -n "${EXISTING_GUEST}" ]; then
+      if docker ps | grep -q "^${EXISTING_GUEST}" >/dev/null; then
+        #echo "Found container: ${EXISTING_GUEST}" >&2
+        CONTAINER="${EXISTING_GUEST}"        # Already running
+      else
+        #echo "Restarting container ${NAME} (${EXISTING_GUEST})" >&2
+        CONTAINER=$(docker start "${EXISTING_GUEST}")  # Restart container
+      fi
+    else
+      CONTAINER=$(docker run -d -i -t --net=none -p 5000:5000 --name="${NAME}" \
+                  "${GUEST_IMAGE}" /bin/bash)
+    fi
+    sudo "${NETSETUP}" "${OVS_SWITCH}" "${CONTAINER}" "${IP}"
+    echo "${CONTAINER}"
+}
+
+
+# Remove the Open vSwitch, so that we get a clean-start on port allocations
+sudo ovs-vsctl --if-exists del-br "${OVS_SWITCH}"
+
+# Start first guest, if not already running
+GUEST_1=$(ensure_guest_running flowrider_h1 "${IP4_PREFIX}.1/24")
+
+# Start second guest
+GUEST_2=$(ensure_guest_running flowrider_h2 "${IP4_PREFIX}.2/24")
+
+# Start the controller Ryu instance, auto-running ryu
+#CONTROLLER=$(ensure_controller_running controller "${IP4_PREFIX}.3/24")
+
+CONTROLLER=$(docker run -d -i -t -p 6633:6633 -p 6653:6653 -p 5000:5000 ryu-flowrider su -c "${RYU_MANAGER} ${RYU_APP}" ryu)
+sudo "${CNETSETUP}" "${OVS_SWITCH}" "${CONTROLLER}" "${IP4_PREFIX}.3/24"
+
+docker attach "${CONTROLLER}"
