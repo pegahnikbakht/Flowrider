@@ -8,10 +8,10 @@ Message 3: Controller -> C : {K}key1
 Message 4: Controller -> S : {K}key2
 Message 5: Controller -> Switch : (P+update)
 Message 6: Switch -> C : (P+update)
-Message 7: C -> S : { Message }K
+C and S derived key from the received key 
+Message 7: C -> S : { Message }K2
 *)
 
-(* key derivation - maybe hash /more general *)
 
 
 type host.
@@ -23,6 +23,14 @@ table keys(host, host, key).
 
 free A, B: host. 
 
+
+
+(* Message authentication code (MAC) *)
+fun mac(key,bitstring) : key.
+
+(* Key derivation function (KDF) *)
+reduc forall k:key, context:bitstring;
+      kdf(k,context) = mac(k,context).
 
 (* Shared key encryption *)
 
@@ -42,17 +50,22 @@ not attacker (new key2).
 (* Queries *)
 
 free c : channel.
+(* Query reachability and secrecy *)
 free mm : bitstring  [private].
+free con:bitstring [private]. 
 free ini : bitstring. 
 query attacker ( mm ).
 
+(* Queries for correspondence *)
+event initclient(key).
+event initserver(key,bitstring).
+(* Add key label to second script *)
+event termclient(key,bitstring).
+event termserver(key).
 
-(* query k: key, x :host; inj-event(endprivisionClient(k,x)) ==> inj-event(beginprovisionClient(k,x)). *)
-(* query k: key, x :host; inj-event(endprivisionServer(k,x)) ==> inj-event(beginprovisionServer(k,x)). *)
-(* query x :host; inj-event(endupdate(x)) ==> inj-event(beginupdate(x)). *)
 
-
-
+query x:key,b:bitstring; inj-event(termclient(x,b))==>inj-event(initserver(x,b)).
+query y:key; inj-event(termserver(y))==>inj-event(initclient(y)).
 
 (* Client *)
 let clientC(k1: key) =  
@@ -61,25 +74,24 @@ out( c , (ini , A, B));
 (* Message 4 *)
 in (c , x :key); 
 let z =  sdecryptkey (x , k1) in
-(* event endprivisionClient(z , A); *)
 (* Message 6 *)
 in( c, (P:bitstring, A2:host, B2:host));
-(* event endupdate(A2); *)
+let z2 = kdf(z, con) in
 (* Message 7 *)
-out ( c , sencrypt ( mm , z )).
+event initclient(z2);
+out ( c , sencrypt ( mm , z2 ));
+in (c, ack:bitstring);
+event termserver(z2).
 
 (* Controller *)
 let controllerC(k1: key, k2: key) =
 (* Message 2 *)
 in( c, (P:bitstring, Aa:host, Bb:host));
-new ke : key;
-(* event beginprovisionClient(ke , Aa); *)
-(* event beginprovisionServer(ke , Bb); *)
+new ke :key ;
 out (c , sencryptkey ( ke , k1 ));
 out (c , sencryptkey ( ke , k2 ));
 insert keys(Aa,Bb, ke);
 (* Message 5 *)
-(* event beginupdate(Aa); *)
 out( c, (P, Aa, Bb)). 
 (* For later +key label *)
 
@@ -104,12 +116,15 @@ let serverS(k2: key) =
 (* Message 3 *)
 in (c , x :key); 
 let z =  sdecryptkey (x , k2) in
-(* event endprivisionServer(z , Bb); *)
 (* Message 7 *)
-in (c , mn :bitstring); 
-let me = sdecrypt (mn , z) in 
+in (c , (mn :bitstring));
+let z2  = kdf(z, con) in
+new ack:bitstring;
+event initserver(z2,ack); 
+let me = sdecrypt (mn , z2) in 
 if me = mm then
-0.
+out(c,sencrypt(ack,z2));
+event termclient(z2,ack).
 
 
 (* Start process *)
