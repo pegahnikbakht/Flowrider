@@ -41,7 +41,7 @@
 #define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 
 // IPv4 address of the server which we will connect to.
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "172.31.1.2"
 // The TCP port number that the server is running on, which we will connect to.
 #define SERVER_PORT 8082
 // GnuTLS log level. 9 is the most verbose.
