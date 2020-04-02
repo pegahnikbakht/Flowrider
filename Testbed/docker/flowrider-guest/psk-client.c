@@ -43,7 +43,7 @@
 // IPv4 address of the server which we will connect to.
 #define SERVER_IP "127.0.0.1"
 // The TCP port number that the server is running on, which we will connect to.
-#define SERVER_PORT 8050
+#define SERVER_PORT 8082
 // GnuTLS log level. 9 is the most verbose.
 #define LOG_LEVEL 0
 
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
 
     // If the handshake worked, we can now receive the data that the server is
     // sending to us.
-    printf("------- BEGIN DATA FROM SERVER -------\n");
+    //printf("------- BEGIN DATA FROM SERVER -------\n");
     char buf[100];
     res = gnutls_record_recv(session, buf, sizeof(buf));
     while (res != 0) {
@@ -177,12 +177,12 @@ int main(int argc, char **argv)
         } else if (gnutls_error_is_fatal(res)) {
             error_exit("Fatal error during read.\n");
         } else if (res > 0) {
-            fwrite(buf, 1, res, stdout);
+           // fwrite(buf, 1, res, stdout);
             fflush(stdout);
         }
         res = gnutls_record_recv(session, buf, sizeof(buf));
     }
-    printf("------- END DATA FROM SERVER -------\n");
+    //printf("------- END DATA FROM SERVER -------\n");
 
     // Tear down the SSL/TLS connection. You could just close the TCP socket,
     // but this authenticates to the client your intent to close the connection,

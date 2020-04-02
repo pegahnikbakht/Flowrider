@@ -41,7 +41,7 @@ ensure_guest_running() {
         CONTAINER=$(docker start "${EXISTING_GUEST}")  # Restart container
       fi
     else
-      CONTAINER=$(docker run -d -i -t --net=none -p 5000:5000 --name="${NAME}" \
+      CONTAINER=$(docker run -d -i -t --net=none -p 5000:5000 -p 8082:8082 --name="${NAME}" \
                   "${GUEST_IMAGE}" /bin/bash)
     fi
     sudo "${NETSETUP}" "${OVS_SWITCH}" "${CONTAINER}" "${IP}"

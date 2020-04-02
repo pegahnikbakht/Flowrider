@@ -40,7 +40,7 @@
 // shouldn't be an ASCII string. Use a good CSPRNG!
 #define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 // This is the port number that the server will listen on.
-#define PORT 8050
+#define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
 #define LOG_LEVEL 0
 
@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     // Enable logging (for auditing).
     // (commented out because it's not available in my version of GnuTLS)
     // gnutls_global_set_audit_log_function(print_audit_logs);
-
+    while(1) {
     // A GnuTLS session is like a socket for an SSL/TLS connection.
     gnutls_session_t session;
 
@@ -193,7 +193,8 @@ int main(int argc, char **argv)
     // Finally, tear down GnuTLS's global state.
     gnutls_global_deinit();
 
-    printf("All done!\n");
+    //printf("All done!\n");
+}
     return 0;
 }
 
@@ -273,7 +274,7 @@ int accept_one_connection(int port)
         error_exit("listen() failed.\n");
     }
 
-    printf("Waiting for a connection...\n");
+    // printf("Waiting for a connection...\n");
 
     // Accept a TCP connection.
     int connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
@@ -281,7 +282,7 @@ int accept_one_connection(int port)
         error_exit("accept() failed.\n");
     }
 
-    printf("A client connected!\n");
+   // printf("A client connected!\n");
 
     close(listenfd);
 

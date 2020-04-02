@@ -9,7 +9,6 @@ RUN apk add  bind-tools
 RUN apk add  iputils net-tools
 RUN apk add --no-cache bash
 
-
 # Add application and data into container
 COPY . /endpoint
 
