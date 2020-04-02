@@ -2,40 +2,35 @@
 
 flowrider protocol
 
-Message 1: C -> S : (P)TCP
-Message 2: S -> Switch : (P)TCP
-Message 3: If flow not found : Switch -> Contoller : (Control message)
-Message 4: Controller -> C : {K}key
-Message 5: Controller -> S : {K}key
-Message 6: Controller -> Switch : (P+update)
-Message 7: Switch -> S : (P+update)
-Message 8: C -> S : { Message }K
+Message 1: C -> Switch : (P)TCP
+Message 2: If flow not found : Switch -> Controller : (Control message)
+Message 3: Controller -> C : {K}key1
+Message 4: Controller -> S : {K}key2
+Message 5: Controller -> Switch : (P+update)
+Message 6: Switch -> C : (P+update)
+C and S derived key from the received key 
+Message 7: C -> S : { Message }K2
 *)
 
-set ignoreTypes = attacker.
+
 
 type host.
 type key.
-type pkey.
-type skey.
-type spkey.
-type sskey.
 
 table flows(host, host, bool).
 table keys(host, host, key).
+(* multi flow with key label *)
 
-(* Public key encryption *)
+free A, B: host. 
 
-fun pk(skey): pkey.
-fun encrypt(bitstring, pkey): bitstring.
-reduc forall x: bitstring, y: skey; decrypt(encrypt(x,pk(y)),y) = x.
 
-(* Signatures *)
 
-fun spk(sskey): spkey.
-fun sign(bitstring, sskey): bitstring.
-reduc forall m: bitstring, k: sskey; getmess(sign(m,k)) = m.
-reduc forall m: bitstring, k: sskey; checksign(sign(m,k), spk(k)) = m.
+(* Message authentication code (MAC) *)
+fun mac(key,bitstring) : key.
+
+(* Key derivation function (KDF) *)
+reduc forall k:key, context:bitstring;
+      kdf(k,context) = mac(k,context).
 
 (* Shared key encryption *)
 
@@ -49,84 +44,100 @@ fun sencryptkey(key,key): key.
 reduc forall x: key, y: key; sdecryptkey(sencryptkey(x,y),y) = x.
 
 (* Secrecy assumptions *)
+not attacker (new key1).
+not attacker (new key2).
 
 (* Queries *)
 
 free c : channel.
+(* Query reachability and secrecy *)
 free mm : bitstring  [private].
+free con:bitstring [private]. 
 free ini : bitstring. 
 query attacker ( mm ).
 
-event beginConn(host).
-event endConn(host).
-event beginupdate(host).
-event endupdate(host).
-event beginprovision(key , host).
-event endprivision(key , host).
+(* Queries for correspondence *)
+event initclient(key).
+event initserver(key,bitstring).
+(* Add key label to second script *)
+event termclient(key,bitstring).
+event termserver(key).
 
 
-query x :host ; event(endConn(x)) ==> event(beginConn(x)).
-query x :host; inj-event(endupdate(x)) ==> inj-event(beginupdate(x)).
-query k: key, x :host; inj-event(endprivision(k,x)) ==> inj-event(beginprovision(k,x)).
+query x:key,b:bitstring; inj-event(termclient(x,b))==>inj-event(initserver(x,b)).
+query y:key; inj-event(termserver(y))==>inj-event(initclient(y)).
+
+(* Client *)
+let clientC(k1: key) =  
+(* Message 1 *)
+out( c , (ini , A, B));
+(* Message 4 *)
+in (c , x :key); 
+let z =  sdecryptkey (x , k1) in
+(* Message 6 *)
+in( c, (P:bitstring, A2:host, B2:host));
+let z2 = kdf(z, con) in
+(* Message 7 *)
+event initclient(z2);
+out ( c , sencrypt ( mm , z2 ));
+in (c, ack:bitstring);
+event termserver(z2).
+
+(* Controller *)
+let controllerC(k1: key, k2: key) =
+(* Message 2 *)
+in( c, (P:bitstring, Aa:host, Bb:host));
+new ke :key ;
+out (c , sencryptkey ( ke , k1 ));
+out (c , sencryptkey ( ke , k2 ));
+insert keys(Aa,Bb, ke);
+(* Message 5 *)
+out( c, (P, Aa, Bb)). 
+(* For later +key label *)
 
 
 (* Switch *)
-(* Message 2 *)
-let switchS(k: key) =
+let switchS() =
+(* Message 1 *)
 in( c , (ms:bitstring, Aa:host, Bb:host));
-(* Message 3  *)
+(* Message 2  *)
 get flows(=Aa, =Bb, f) in
 if not(f) then 
 out ( c, (ms, Aa, Bb) );
-in( c, (P:bitstring, Aa:host, Bb:host));
-insert flows(Aa, Bb, true ).
+(* Message 5 *)
+in( c, (P:bitstring, A1:host, B1:host));
+insert flows(A1, B1, true );
+(* Message 6 *)
+out ( c, (P, A1, B1) ).
 
-
- 
-(* Controller *)
-let controllerC(k: key) =
-(* Message 3 *)
-in( c, (P:bitstring, Aa:host, Bb:host));
-new ke : key;
-out (c , sencryptkey ( ke , k ));
-insert keys(Aa,Bb, ke);
-event beginprovision(ke , Aa);
-event beginprovision(ke , Bb);
-event beginupdate(Bb);
-out( c, (P, Aa, Bb)).
 
 (* Server *)
-let serverS(k: key, Bb: host) =
-in( c , (mes : bitstring, Aa: host));
-(* Message 2 *)
-out ( c, (mes , Aa, Bb) );
-(* Message 4 *)
+let serverS(k2: key) =
+(* Message 3 *)
 in (c , x :key); 
-let z = sdecryptkey (x , k) in
-event endprivision(z , Bb);
-event endupdate(Bb);
-in (c , mn :bitstring); 
-let me = sdecrypt (mn , z) in
-event endConn(Aa).
+let z =  sdecryptkey (x , k2) in
+(* Message 7 *)
+in (c , (mn :bitstring));
+let z2  = kdf(z, con) in
+new ack:bitstring;
+event initserver(z2,ack); 
+let me = sdecrypt (mn , z2) in 
+if me = mm then
+out(c,sencrypt(ack,z2));
+event termclient(z2,ack).
 
-(* Client *)
-let clientC(k: key, Aa: host) =  
-(* Message 1 *)
-out( c , (ini , Aa));
-(* Message 5 *)
-in (c , x :key); 
-let z = sdecryptkey (x , k) in
-event endprivision(z , Aa);
-out ( c , sencrypt ( mm , z ));
-event beginConn(Aa).
 
 (* Start process *)
 process 
-      new kk : key;
-      new C : host;
-      new S : host;
+     (* orchestration keys *)
+      new key2 : key;
+	  new key1 :key;
       (* Launch an unbounded number of sessions *)
-      (  ( ! clientC (kk, C))|( ! serverS (kk, S ))| ( ! controllerC (kk))|( ! switchS (kk))  )
+      (  ( ! clientC (key1))|( ! serverS (key2 ))| ( ! controllerC (key1, key2))|( ! switchS ())  )
+
+
+
+
 
 
 
