@@ -38,7 +38,7 @@
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
-//#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 
 // IPv4 address of the server which we will connect to.
 #define SERVER_IP "127.0.0.1"
@@ -100,8 +100,12 @@ int main(int argc, char **argv)
     //          unsigned int size;
     //      } gnutls_datum_t;
     gnutls_datum_t key;
-    char psk = get_psk();
+    char *psk = malloc (sizeof (char) * 27);
+    char* get_psk();
+    psk = get_psk();
+    printf("Printing the extracted key:%s \n", psk);
     key.size = strlen(psk);
+    printf("length of standard key: %d \n", key.size);
     key.data = malloc(key.size);
     memcpy(key.data, psk, key.size);
     // Put the username and key into the structure we use to tell GnuTLs what
@@ -275,18 +279,16 @@ void error_exit(const char *msg)
 char* get_psk() {
     FILE *fp;
     char str[1024];
-    char* filename = "/endpoint/psk.txt";
-    char* psk;
+    char* filename = "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt";
+    char *psk = malloc (sizeof (char) * 27);
 
     fp = fopen(filename, "r");
     if (fp == NULL){
         printf("Could not open file %s",filename);
-        return 1;
+        return NULL;
     }
-    while (fgets(str, 1024, fp) != NULL)
-        printf("%s", str);
+    fgets(str, 1024, fp);
     fclose(fp);
-    psk = malloc (sizeof (char) * 1024);
-    strcpy(psk, str);
+    strncpy(psk, str, 27);
     return psk;
 }
