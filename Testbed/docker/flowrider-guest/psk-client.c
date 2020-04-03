@@ -4,7 +4,7 @@
 // This code was written by Taylor Hornby on April 18, 2013. You can find it
 // on the web at:
 //          https://defuse.ca/gnutls-psk-client-server-example.htm
-// 
+//
 // This code is in the public domain. You can do whatever you want with it.
 //
 // In this simple example,
@@ -38,7 +38,7 @@
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
-#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+//#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 
 // IPv4 address of the server which we will connect to.
 #define SERVER_IP "172.31.1.2"
@@ -77,6 +77,9 @@ int main(int argc, char **argv)
     // A GnuTLS session is like a socket for an SSL/TLS connection.
     gnutls_session_t session;
 
+    // Make a TCP connection to the server.
+    int connfd = make_one_connection(SERVER_IP, SERVER_PORT);
+
     // Initialize the session for our connection to the server.
     res = gnutls_init(&session, GNUTLS_CLIENT);
     if (res != GNUTLS_E_SUCCESS) {
@@ -97,9 +100,10 @@ int main(int argc, char **argv)
     //          unsigned int size;
     //      } gnutls_datum_t;
     gnutls_datum_t key;
-    key.size = strlen(SECRET_KEY);
+    char psk = get_psk();
+    key.size = strlen(psk);
     key.data = malloc(key.size);
-    memcpy(key.data, SECRET_KEY, key.size);
+    memcpy(key.data, psk, key.size);
     // Put the username and key into the structure we use to tell GnuTLs what
     // the credentials are. The example server doesn't care about usernames, so
     // we use "Alice" here.
@@ -132,9 +136,6 @@ int main(int argc, char **argv)
     if (res != GNUTLS_E_SUCCESS) {
         error_exit("gnutls_priority_set_direct() failed.\n");
     }
-
-    // Make a TCP connection to the server.
-    int connfd = make_one_connection(SERVER_IP, SERVER_PORT);
 
     // Below we give GnuTLS access to the transport layer. GnuTLS needs a way of
     // reading and writing to and from the TCP socket (or whatever transport
@@ -242,7 +243,7 @@ void print_audit_logs(gnutls_session_t session, const char* message)
 }
 
 // Makes a TCP connection to the given IPv4 address and port number.
-int make_one_connection(const char *address, int port) 
+int make_one_connection(const char *address, int port)
 {
     int res;
     int connfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -264,8 +265,28 @@ int make_one_connection(const char *address, int port)
     return connfd;
 }
 
-void error_exit(const char *msg) 
+void error_exit(const char *msg)
 {
     printf("ERROR: %s", msg);
     exit(1);
+}
+
+
+char* get_psk() {
+    FILE *fp;
+    char str[1024];
+    char* filename = "/endpoint/psk.txt";
+    char* psk;
+
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",filename);
+        return 1;
+    }
+    while (fgets(str, 1024, fp) != NULL)
+        printf("%s", str);
+    fclose(fp);
+    psk = malloc (sizeof (char) * 1024);
+    strcpy(psk, str);
+    return psk;
 }
