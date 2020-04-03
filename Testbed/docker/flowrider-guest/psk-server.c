@@ -38,7 +38,8 @@
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
-#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+//#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+#define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
@@ -209,12 +210,18 @@ int psk_creds(gnutls_session_t session, const char *username, gnutls_datum_t *ke
     // time. In a real application, you would look up the key for the username
     // and return that. If the username does not exist, return a negative
     // number (see the manual).
-    key->size = strlen(SECRET_KEY);
+
+    char *psk = malloc (sizeof (char) * 27);
+    char* get_psk();
+    psk = get_psk();
+    printf("Printing the extracted key:%s \n", psk);
+
+    key->size = strlen(psk);
     key->data = gnutls_malloc(key->size);
     if (key->data == NULL) {
         return -1;
     }
-    memcpy(key->data, SECRET_KEY, key->size);
+    memcpy(key->data, psk, key->size);
     return 0;
 }
 
@@ -294,4 +301,21 @@ void error_exit(const char *msg)
 {
     printf("ERROR: %s", msg);
     exit(1);
+}
+
+char* get_psk() {
+    FILE *fp;
+    char str[1024];
+    char* filename = PSK_CONFIG;
+    char *psk = malloc (sizeof (char) * 27);
+
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",filename);
+        return NULL;
+    }
+    fgets(str, 1024, fp);
+    fclose(fp);
+    strncpy(psk, str, 27);
+    return psk;
 }
