@@ -4,7 +4,7 @@
 // This code was written by Taylor Hornby on April 18, 2013. You can find it
 // on the web at:
 //          https://defuse.ca/gnutls-psk-client-server-example.htm
-// 
+//
 // This code is in the public domain. You can do whatever you want with it.
 //
 // In this simple example,
@@ -38,7 +38,7 @@
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
-#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+//#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
@@ -87,6 +87,13 @@ int main(int argc, char **argv)
     if (res != 0) {
         error_exit("gnutls_psk_allocate_server_credentials() failed.\n");
     }
+
+
+    // Accept a _TCP_ connection BEFORE having access to the PSK
+    // The PSK is not necessary at this point and will be delivered
+    // out of band by the Flowrider protocol;
+    int connfd = accept_one_connection(PORT);
+
     // GnuTLS will call psk_creds to ask for the key associated with the
     // client's username.
     gnutls_psk_set_server_credentials_function(cred, psk_creds);
@@ -111,9 +118,6 @@ int main(int argc, char **argv)
     if (res != GNUTLS_E_SUCCESS) {
         error_exit("gnutls_priority_set_direct() failed.\n");
     }
-
-    // Accept a TCP connection.
-    int connfd = accept_one_connection(PORT);
 
     // Below we give GnuTLS access to the transport layer. GnuTLS needs a way of
     // reading and writing to and from the TCP socket (or whatever transport
@@ -208,12 +212,18 @@ int psk_creds(gnutls_session_t session, const char *username, gnutls_datum_t *ke
     // time. In a real application, you would look up the key for the username
     // and return that. If the username does not exist, return a negative
     // number (see the manual).
-    key->size = strlen(SECRET_KEY);
+
+    char *psk = malloc (sizeof (char) * 27);
+    char* get_psk();
+    psk = get_psk();
+    printf("Printing the extracted key:%s \n", psk);
+
+    key->size = strlen(psk);
     key->data = gnutls_malloc(key->size);
     if (key->data == NULL) {
         return -1;
     }
-    memcpy(key->data, SECRET_KEY, key->size);
+    memcpy(key->data, psk, key->size);
     return 0;
 }
 
@@ -248,7 +258,7 @@ void print_audit_logs(gnutls_session_t session, const char* message)
 }
 
 // Listens on 'port' for a TCP connection. Accepts at most one connection.
-int accept_one_connection(int port) 
+int accept_one_connection(int port)
 {
     int res;
     // Listen for a TCP connection.
@@ -289,8 +299,25 @@ int accept_one_connection(int port)
     return connfd;
 }
 
-void error_exit(const char *msg) 
+void error_exit(const char *msg)
 {
     printf("ERROR: %s", msg);
     exit(1);
+}
+
+char* get_psk() {
+    FILE *fp;
+    char str[1024];
+    char* filename = "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt";
+    char *psk = malloc (sizeof (char) * 27);
+
+    fp = fopen(filename, "r");
+    if (fp == NULL){
+        printf("Could not open file %s",filename);
+        return NULL;
+    }
+    fgets(str, 1024, fp);
+    fclose(fp);
+    strncpy(psk, str, 27);
+    return psk;
 }
