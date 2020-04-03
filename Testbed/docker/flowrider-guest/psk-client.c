@@ -41,7 +41,7 @@
 //#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 #define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
 // IPv4 address of the server which we will connect to.
-#define SERVER_IP "127.0.0.1"
+#define SERVER_IP "172.31.1.2"
 // The TCP port number that the server is running on, which we will connect to.
 #define SERVER_PORT 8082
 // GnuTLS log level. 9 is the most verbose.
@@ -103,11 +103,11 @@ int main(int argc, char **argv)
     char *psk = malloc (sizeof (char) * 27);
     char* get_psk();
     psk = get_psk();
-    printf("Printing the extracted key:%s \n", psk);
     key.size = strlen(psk);
-    printf("length of standard key: %d \n", key.size);
     key.data = malloc(key.size);
     memcpy(key.data, psk, key.size);
+    free(psk);
+    psk = NULL;
     // Put the username and key into the structure we use to tell GnuTLs what
     // the credentials are. The example server doesn't care about usernames, so
     // we use "Alice" here.
@@ -278,7 +278,7 @@ void error_exit(const char *msg)
 
 char* get_psk() {
     FILE *fp;
-    char str[1024];
+    char str[28];
     char* filename = PSK_CONFIG;
     char *psk = malloc (sizeof (char) * 27);
 
@@ -287,7 +287,7 @@ char* get_psk() {
         printf("Could not open file %s",filename);
         return NULL;
     }
-    fgets(str, 1024, fp);
+    fgets(str, 28, fp);
     fclose(fp);
     strncpy(psk, str, 27);
     return psk;
