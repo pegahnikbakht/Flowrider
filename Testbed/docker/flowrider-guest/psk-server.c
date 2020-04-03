@@ -38,8 +38,7 @@
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
-//#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
-#define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
+#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
@@ -72,6 +71,10 @@ int main(int argc, char **argv)
     // (commented out because it's not available in my version of GnuTLS)
     // gnutls_global_set_audit_log_function(print_audit_logs);
     while(1) {
+
+    // Accept a TCP connection.
+    int connfd = accept_one_connection(PORT);
+
     // A GnuTLS session is like a socket for an SSL/TLS connection.
     gnutls_session_t session;
 
@@ -88,13 +91,6 @@ int main(int argc, char **argv)
     if (res != 0) {
         error_exit("gnutls_psk_allocate_server_credentials() failed.\n");
     }
-
-
-    // Accept a _TCP_ connection BEFORE having access to the PSK
-    // The PSK is not necessary at this point and will be delivered
-    // out of band by the Flowrider protocol;
-    int connfd = accept_one_connection(PORT);
-
     // GnuTLS will call psk_creds to ask for the key associated with the
     // client's username.
     gnutls_psk_set_server_credentials_function(cred, psk_creds);
@@ -213,18 +209,12 @@ int psk_creds(gnutls_session_t session, const char *username, gnutls_datum_t *ke
     // time. In a real application, you would look up the key for the username
     // and return that. If the username does not exist, return a negative
     // number (see the manual).
-
-    char *psk = malloc (sizeof (char) * 27);
-    char* get_psk();
-    psk = get_psk();
-    printf("Printing the extracted key:%s \n", psk);
-
-    key->size = strlen(psk);
+    key->size = strlen(SECRET_KEY);
     key->data = gnutls_malloc(key->size);
     if (key->data == NULL) {
         return -1;
     }
-    memcpy(key->data, psk, key->size);
+    memcpy(key->data, SECRET_KEY, key->size);
     return 0;
 }
 
@@ -304,21 +294,4 @@ void error_exit(const char *msg)
 {
     printf("ERROR: %s", msg);
     exit(1);
-}
-
-char* get_psk() {
-    FILE *fp;
-    char str[1024];
-    char* filename = PSK_CONFIG;
-    char *psk = malloc (sizeof (char) * 27);
-
-    fp = fopen(filename, "r");
-    if (fp == NULL){
-        printf("Could not open file %s",filename);
-        return NULL;
-    }
-    fgets(str, 1024, fp);
-    fclose(fp);
-    strncpy(psk, str, 27);
-    return psk;
 }
