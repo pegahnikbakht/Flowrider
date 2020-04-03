@@ -38,8 +38,8 @@
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
-#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
-
+//#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+#define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
 // IPv4 address of the server which we will connect to.
 #define SERVER_IP "127.0.0.1"
 // The TCP port number that the server is running on, which we will connect to.
@@ -279,7 +279,7 @@ void error_exit(const char *msg)
 char* get_psk() {
     FILE *fp;
     char str[1024];
-    char* filename = "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt";
+    char* filename = PSK_CONFIG;
     char *psk = malloc (sizeof (char) * 27);
 
     fp = fopen(filename, "r");

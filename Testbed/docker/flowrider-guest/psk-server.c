@@ -39,6 +39,7 @@
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
 //#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
+#define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
@@ -308,7 +309,7 @@ void error_exit(const char *msg)
 char* get_psk() {
     FILE *fp;
     char str[1024];
-    char* filename = "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt";
+    char* filename = PSK_CONFIG;
     char *psk = malloc (sizeof (char) * 27);
 
     fp = fopen(filename, "r");
