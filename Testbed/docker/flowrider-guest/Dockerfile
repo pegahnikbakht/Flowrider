@@ -7,7 +7,7 @@
 FROM ubuntu:19.04
 
 RUN apt-get update
-Run apt-get install -qy dnsutils iputils-ping
+Run apt-get install -qy  dnsutils iputils-ping netcat ipython
 
 # Add application and data into container
 COPY . /endpoint
