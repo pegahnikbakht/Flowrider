@@ -152,32 +152,7 @@ int main(void)
                 }
                 printf("- Handshake was completed\n");
 
-                /* see the Getting peer's information example */
-                /* print_info(session); */
-
-/*                for (;;) {
-                        LOOP_CHECK(ret, gnutls_record_recv(session, buffer, MAX_BUF));
-
-                        if (ret == 0) {
-                                printf
-                                    ("\n- Peer has closed the GnuTLS connection\n");
-                                break;
-                        } else if (ret < 0
-                                   && gnutls_error_is_fatal(ret) == 0) {
-                                fprintf(stderr, "*** Warning: %s\n",
-                                        gnutls_strerror(ret));
-                        } else if (ret < 0) {
-                                fprintf(stderr, "\n*** Received corrupted "
-                                        "data(%d). Closing the connection.\n\n",
-                                        ret);
-                                break;
-                        } else if (ret > 0) {
-                                // echo data back to the client
-                                CHECK(gnutls_record_send(session, buffer, ret));
-                        }
-                }
-*/
-                printf("Closign connection\n");
+                printf("Closing connection\n");
                 /* do not wait for the peer to close the connection.
                  */
                 LOOP_CHECK(ret, gnutls_bye(session, GNUTLS_SHUT_WR));

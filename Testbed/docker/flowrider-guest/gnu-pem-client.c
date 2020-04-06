@@ -86,7 +86,7 @@ int main(void)
         /* put the x509 credentials to the current session
          */
         CHECK(gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, xcred));
-        //gnutls_session_set_verify_cert(session, "www.example.com", 0);
+        gnutls_session_set_verify_cert(session, "www.example.com", 0);
 
         /* connect to the peer
          */
@@ -132,6 +132,7 @@ int main(void)
         // If the handshake worked, we can now receive the data that the server is
         // sending to us.
         //printf("------- BEGIN DATA FROM SERVER -------\n");
+        /**
         char buf[100];
         ret = gnutls_record_recv(session, buf, sizeof(buf));
         while (ret != 0) {
@@ -144,10 +145,10 @@ int main(void)
                 fflush(stdout);
             }
             ret = gnutls_record_recv(session, buf, sizeof(buf));
-        }
+        } */
         //printf("------- END DATA FROM SERVER -------\n");
 
-
+        printf("Closing connection\n");
         CHECK(gnutls_bye(session, GNUTLS_SHUT_RDWR));
 
       end:
