@@ -200,8 +200,8 @@ class FlowRider(app_manager.RyuApp):
     self.logger.info("Connection attempt from from %s" % eth.src)
     self.logger.info("SYN packet, sending out keys")
     key = self.make_key()
-    self.send_key(key, '172.31.1.2')
     self.send_key(key, '172.31.1.1')
+    self.send_key(key, '172.31.1.2')
     self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
@@ -214,6 +214,7 @@ class FlowRider(app_manager.RyuApp):
     s.sendall(key)
 #    s.sendall(b'THIS IS THE PRE-SHARED KEY.')
     print('Done')
+    s.close()
 
   def make_key(self):
     key = secrets.token_hex(128)
