@@ -16,8 +16,8 @@
 #include <gnutls/gnutls.h>
 #include <assert.h>
 
-#define KEYFILE "key.pem"
-#define CERTFILE "cert.pem"
+#define KEYFILE "certs/key.pem"
+#define CERTFILE "certs/cert.pem"
 #define CAFILE "/etc/ssl/certs/ca-certificates.crt"
 #define CRLFILE "crl.pem"
 
@@ -64,8 +64,8 @@ int main(void)
         CHECK(gnutls_certificate_set_x509_trust_file(x509_cred, CAFILE,
                                                      GNUTLS_X509_FMT_PEM));
 
-        CHECK(gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
-                                                   GNUTLS_X509_FMT_PEM));
+//        CHECK(gnutls_certificate_set_x509_crl_file(x509_cred, CRLFILE,
+//                                                   GNUTLS_X509_FMT_PEM));
 
         /* The following code sets the certificate key pair as well as,
          * an OCSP response which corresponds to it. It is possible
@@ -176,7 +176,7 @@ int main(void)
                                 CHECK(gnutls_record_send(session, buffer, ret));
                         }
                 }
-*/                
+*/
                 printf("\n");
                 /* do not wait for the peer to close the connection.
                  */
