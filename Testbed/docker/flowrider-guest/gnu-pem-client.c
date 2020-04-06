@@ -77,16 +77,16 @@ int main(void)
         /* Initialize TLS session */
         CHECK(gnutls_init(&session, GNUTLS_CLIENT));
 
-        CHECK(gnutls_server_name_set(session, GNUTLS_NAME_DNS, "www.example.com",
-                                     strlen("www.example.com")));
+        CHECK(gnutls_server_name_set(session, GNUTLS_NAME_DNS, "localhost",
+                                     strlen("localhost")));
 
         /* It is recommended to use the default priorities */
         CHECK(gnutls_set_default_priority(session));
 
         /* put the x509 credentials to the current session
          */
-        CHECK(gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, xcred));
-        gnutls_session_set_verify_cert(session, "www.example.com", 0);
+        CHECK(gnutls_credentials_set(session, GNUTLS_ANON_CERTIFICATE, xcred));
+        gnutls_session_set_verify_cert(session, "localhost", 0);
 
         /* connect to the peer
          */
