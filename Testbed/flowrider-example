@@ -23,7 +23,7 @@ CNETSETUP="${CNETSETUP:-${BIN_DIR}/dockerovs-controller}"
 OVS_SWITCH="${OVS_SWITCH:-flowrider}"
 IP4_PREFIX="${IP4_PREFIX:-172.31.1}"
 RYU_MANAGER="${RYU_MANAGER:-/usr/local/bin/ryu-manager}"
-RYU_APP="${RYU_APP:-/home/ryu/flowrider3.py}"
+RYU_APP="${RYU_APP:-/home/ryu/flowrider4.py}"
 GUEST_IMAGE="${GUEST_IMAGE:-flowrider-guest}"
 CONTROLLER_IMAGE="${CONTROLLER_IMAGE:-ryu-flowrider}"
 

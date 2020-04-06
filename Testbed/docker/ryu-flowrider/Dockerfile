@@ -29,9 +29,9 @@ RUN groupadd --system ryu
 RUN useradd  --system -d /home/ryu -m -s /bin/bash -g ryu ryu
 
 # Add application into container
-ADD flowrider3.py /home/ryu/flowrider3.py
+ADD flowrider4.py /home/ryu/flowrider4.py
 
 # Default command is to run Ryu against that application
-CMD ["/bin/su", "-c", "/usr/local/bin/ryu-manager", "/home/ryu/flowrider3.py"]
+CMD ["/bin/su", "-c", "/usr/local/bin/ryu-manager", "/home/ryu/flowrider4.py"]
 
 
