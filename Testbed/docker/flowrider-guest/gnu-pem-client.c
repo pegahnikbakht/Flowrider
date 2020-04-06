@@ -47,7 +47,8 @@ int main(void)
 {
         int ret;
         gnutls_session_t session;
-        //char buffer[MAX_BUF + 1], *desc;
+        //char buffer[MAX_BUF + 1],
+        char *desc;
         gnutls_datum_t out;
         int type;
         unsigned status;
@@ -132,17 +133,17 @@ int main(void)
         // sending to us.
         //printf("------- BEGIN DATA FROM SERVER -------\n");
         char buf[100];
-        res = gnutls_record_recv(session, buf, sizeof(buf));
-        while (res != 0) {
-            if (res == GNUTLS_E_REHANDSHAKE) {
+        ret = gnutls_record_recv(session, buf, sizeof(buf));
+        while (ret != 0) {
+            if (ret == GNUTLS_E_REHANDSHAKE) {
                 error_exit("Peer wants to re-handshake but we don't support that.\n");
-            } else if (gnutls_error_is_fatal(res)) {
+            } else if (gnutls_error_is_fatal(ret)) {
                 error_exit("Fatal error during read.\n");
-            } else if (res > 0) {
+            } else if (ret > 0) {
                // fwrite(buf, 1, res, stdout);
                 fflush(stdout);
             }
-            res = gnutls_record_recv(session, buf, sizeof(buf));
+            ret = gnutls_record_recv(session, buf, sizeof(buf));
         }
         //printf("------- END DATA FROM SERVER -------\n");
 
