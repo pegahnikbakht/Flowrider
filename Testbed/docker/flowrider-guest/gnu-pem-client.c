@@ -11,6 +11,13 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
+// Stuff for sockets
+#include <unistd.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
 /* A very basic TLS client, with X.509 authentication and server certificate
  * verification. Note that error recovery is minimal for simplicity.
  */
@@ -30,13 +37,17 @@
 #define MAX_BUF 1024
 #define MSG "GET / HTTP/1.0\r\n\r\n"
 
-extern void tcp_close(int sd);
+int make_one_connection(const char *address, int port);
+void error_exit(const char *msg);
+// GnuTLS callbacks.
+ssize_t data_push(gnutls_transport_ptr_t, const void*, size_t);
+ssize_t data_pull(gnutls_transport_ptr_t, void*, size_t);
 
 int main(void)
 {
-        int ret, sd, ii;
+        int ret;
         gnutls_session_t session;
-        char buffer[MAX_BUF + 1], *desc;
+        //char buffer[MAX_BUF + 1], *desc;
         gnutls_datum_t out;
         int type;
         unsigned status;
