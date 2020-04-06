@@ -198,7 +198,7 @@ class FlowRider(app_manager.RyuApp):
     #self.logger.info("UDP received from %s" % pkt)
     #self.logger.info("UDP received from %s" % eth.src)
     self.logger.info("Connection attempt from from %s" % eth.src)
-    if pkt.has_flags(tcp.TCP_SYN):
+    if packet.tcp(ev.msg.data).has_flags(tcp.TCP_SYN):
         self.logger.info("SYN packet, sending out keys")
         key = self.make_key()
         self.send_key(key, '172.31.1.2')
