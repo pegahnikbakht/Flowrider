@@ -41,7 +41,8 @@
 //#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
 #define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
 // IPv4 address of the server which we will connect to.
-#define SERVER_IP "172.31.1.2"
+//#define SERVER_IP "172.31.1.2"
+#define SERVER_IP "127.0.0.1"
 // The TCP port number that the server is running on, which we will connect to.
 #define SERVER_PORT 8082
 // GnuTLS log level. 9 is the most verbose.
@@ -278,17 +279,17 @@ void error_exit(const char *msg)
 
 char* get_psk() {
     FILE *fp;
-    char str[28];
+    char str[257];
     char* filename = PSK_CONFIG;
-    char *psk = malloc (sizeof (char) * 27);
+    char *psk = malloc (sizeof (char) * 256);
 
     fp = fopen(filename, "r");
     if (fp == NULL){
         printf("Could not open file %s",filename);
         return NULL;
     }
-    fgets(str, 28, fp);
+    fgets(str, 257, fp);
     fclose(fp);
-    strncpy(psk, str, 27);
+    strncpy(psk, str, 256);
     return psk;
 }
