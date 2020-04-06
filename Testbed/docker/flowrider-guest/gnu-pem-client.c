@@ -10,11 +10,15 @@
 #include <assert.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
-#include "examples.h"
 
 /* A very basic TLS client, with X.509 authentication and server certificate
  * verification. Note that error recovery is minimal for simplicity.
  */
+
+ //#define SERVER_IP "172.31.1.2"
+ #define SERVER_IP "127.0.0.1"
+ // The TCP port number that the server is running on, which we will connect to.
+ #define SERVER_PORT 50556
 
 #define CHECK(x) assert((x)>=0)
 #define LOOP_CHECK(rval, cmd) \
@@ -26,7 +30,6 @@
 #define MAX_BUF 1024
 #define MSG "GET / HTTP/1.0\r\n\r\n"
 
-extern int tcp_connect(void);
 extern void tcp_close(int sd);
 
 int main(void)
@@ -75,11 +78,20 @@ int main(void)
 
         /* connect to the peer
          */
-        sd = tcp_connect();
+         int connfd = make_one_connection(SERVER_IP, SERVER_PORT);
+         int *connfdPtr = malloc(sizeof(int));
+         *connfdPtr = connfd;
 
-        gnutls_transport_set_int(session, sd);
-        gnutls_handshake_set_timeout(session,
-                                     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
+//        gnutls_transport_set_int(session, connfdPtr);
+
+        gnutls_transport_set_ptr(session, connfdPtr);
+        // Set the callback that allows GnuTLS to PUSH data TO the transport layer
+        gnutls_transport_set_push_function(session, data_push);
+        // Set the callback that allows GnuTls to PULL data FROM the tranport layer
+        gnutls_transport_set_pull_function(session, data_pull);
+
+//        gnutls_handshake_set_timeout(session,
+//                                     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
 
         /* Perform the TLS handshake
          */
@@ -105,35 +117,34 @@ int main(void)
                 gnutls_free(desc);
         }
 
-	/* send data */
-        LOOP_CHECK(ret, gnutls_record_send(session, MSG, strlen(MSG)));
-
-        LOOP_CHECK(ret, gnutls_record_recv(session, buffer, MAX_BUF));
-        if (ret == 0) {
-                printf("- Peer has closed the TLS connection\n");
-                goto end;
-        } else if (ret < 0 && gnutls_error_is_fatal(ret) == 0) {
-                fprintf(stderr, "*** Warning: %s\n", gnutls_strerror(ret));
-        } else if (ret < 0) {
-                fprintf(stderr, "*** Error: %s\n", gnutls_strerror(ret));
-                goto end;
+        // If the handshake worked, we can now receive the data that the server is
+        // sending to us.
+        //printf("------- BEGIN DATA FROM SERVER -------\n");
+        char buf[100];
+        res = gnutls_record_recv(session, buf, sizeof(buf));
+        while (res != 0) {
+            if (res == GNUTLS_E_REHANDSHAKE) {
+                error_exit("Peer wants to re-handshake but we don't support that.\n");
+            } else if (gnutls_error_is_fatal(res)) {
+                error_exit("Fatal error during read.\n");
+            } else if (res > 0) {
+               // fwrite(buf, 1, res, stdout);
+                fflush(stdout);
+            }
+            res = gnutls_record_recv(session, buf, sizeof(buf));
         }
+        //printf("------- END DATA FROM SERVER -------\n");
 
-        if (ret > 0) {
-                printf("- Received %d bytes: ", ret);
-                for (ii = 0; ii < ret; ii++) {
-                        fputc(buffer[ii], stdout);
-                }
-                fputs("\n", stdout);
-        }
 
         CHECK(gnutls_bye(session, GNUTLS_SHUT_RDWR));
 
       end:
 
-        tcp_close(sd);
-
+        // Destroy the session.
         gnutls_deinit(session);
+
+        // Close the TCP connection.
+        close(connfd);
 
         gnutls_certificate_free_credentials(xcred);
 
