@@ -164,3 +164,62 @@ int main(void)
 
         return 0;
 }
+
+// GnuTLS calls this function to send data through the transport layer. We set
+// this callback with gnutls_transport_set_push_function(). It should behave
+// like send() (see the manual for specifics).
+ssize_t data_push(gnutls_transport_ptr_t ptr, const void* data, size_t len)
+{
+    int sockfd = *(int*)(ptr);
+    return send(sockfd, data, len, 0);
+}
+
+// GnuTLS calls this function to receive data from the transport layer. We set
+// this callback with gnutls_transport_set_pull_function(). It should act like
+// recv() (see the manual for specifics).
+ssize_t data_pull(gnutls_transport_ptr_t ptr, void* data, size_t maxlen)
+{
+    int sockfd = *(int*)(ptr);
+    return recv(sockfd, data, maxlen, 0);
+}
+
+// GnuTLS will call this function whenever there is a new debugging log message.
+void print_logs(int level, const char* msg)
+{
+    printf("GnuTLS [%d]: %s", level, msg);
+}
+
+// GnuTLS will call this function whenever there is a new audit log message.
+void print_audit_logs(gnutls_session_t session, const char* message)
+{
+    printf("GnuTLS Audit: %s", message);
+}
+
+// Makes a TCP connection to the given IPv4 address and port number.
+int make_one_connection(const char *address, int port)
+{
+    int res;
+    int connfd = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in serv_addr;
+    if (connfd < 0) {
+        error_exit("socket() failed.\n");
+    }
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+    res = inet_pton(AF_INET, address, &serv_addr.sin_addr);
+    if (res != 1) {
+        error_exit("inet_pton() failed.\n");
+    }
+    res = connect(connfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    if (res < 0) {
+        error_exit("connect() failed.\n");
+    }
+    return connfd;
+}
+
+void error_exit(const char *msg)
+{
+    printf("ERROR: %s", msg);
+    exit(1);
+}
