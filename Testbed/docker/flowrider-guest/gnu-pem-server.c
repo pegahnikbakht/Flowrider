@@ -53,7 +53,7 @@ int main(void)
         socklen_t client_len;
         char topbuf[512];
         gnutls_session_t session;
-        char buffer[MAX_BUF + 1];
+        //char buffer[MAX_BUF + 1];
         int optval = 1;
 
         /* for backwards compatibility with gnutls < 3.3.0 */
@@ -177,7 +177,7 @@ int main(void)
                         }
                 }
 */
-                printf("\n");
+                printf("Closign connection\n");
                 /* do not wait for the peer to close the connection.
                  */
                 LOOP_CHECK(ret, gnutls_bye(session, GNUTLS_SHUT_WR));
