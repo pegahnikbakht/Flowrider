@@ -161,19 +161,19 @@ class FlowRider(app_manager.RyuApp):
                   match, actions)
 
   # Ask switch to send us SYN packets from host 1
-  def add_notify_on_syn_from_host_1(self, dp):
-      ofp    = dp.ofproto_v1_3
-      parser = dp.ofproto_v1_3_parser
+ # def add_notify_on_syn_from_host_1(self, dp):
+    #  ofp    = dp.ofproto_v1_3
+    #  parser = dp.ofproto_v1_3_parser
 
-      self.logger.info("Request notify on SYN packets from h1")
-      match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
-      eth_type = ether.ETH_TYPE_IP,
-      ip_proto = inet.IPPROTO_TCP,
-      tcp_flags = tcp.TCP_SYN)
-      actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
-      ofp.OFPCML_NO_BUFFER)]
-      self.add_flow(dp, FlowRider.PRI_MID,
-      match, actions)
+     # self.logger.info("Request notify on SYN packets from h1")
+      #match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
+      #eth_type = ether.ETH_TYPE_IP,
+      #ip_proto = inet.IPPROTO_TCP,
+      #tcp_flags = tcp.TCP_SYN)
+      #actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
+      #ofp.OFPCML_NO_BUFFER)]
+      #self.add_flow(dp, FlowRider.PRI_MID,
+      #match, actions)
 
   @set_ev_cls(ofp_event.EventOFPStateChange,
               MAIN_DISPATCHER)
@@ -183,7 +183,7 @@ class FlowRider(app_manager.RyuApp):
     self.allow_traffic_by_default(dp)
     self.flood_all_arp(dp)
     self.add_notify_on_udp_from_host_1(dp)
-    self.add_notify_on_syn_from_host_1(dp)
+    #self.add_notify_on_syn_from_host_1(dp)
 
   @set_ev_cls(ofp_event.EventOFPPacketIn,
               MAIN_DISPATCHER)
