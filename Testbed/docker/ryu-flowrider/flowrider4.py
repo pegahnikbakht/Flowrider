@@ -37,14 +37,14 @@ from ryu.base               import app_manager
 from ryu.controller         import ofp_event
 from ryu.controller.handler import MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
-from ryu.ofproto            import ofproto_v1_3, ether, inet
+from ryu.ofproto            import ofproto_v1_3, ofproto_v1_3_parser, ether, inet, tcp
 from ryu.lib.packet         import packet, ethernet, ipv4
 import socket
 import thread
 import secrets
 
 
-class KiwiPycon(app_manager.RyuApp):
+class FlowRider(app_manager.RyuApp):
   # Tell Ryu to only accept OpenFlow 1.3
   OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
@@ -55,7 +55,7 @@ class KiwiPycon(app_manager.RyuApp):
 
   # Minimal __init__
   def __init__(self, *args, **kwargs):
-    super(KiwiPycon, self).__init__(*args, **kwargs)
+    super(FlowRider, self).__init__(*args, **kwargs)
 
   # Helper to prepare format flow add messages
   def add_flow(self, dp, priority, match, actions):
@@ -101,7 +101,7 @@ class KiwiPycon(app_manager.RyuApp):
     match   = parser.OFPMatch(eth_type = ether.ETH_TYPE_ARP)
     actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, KiwiPycon.PRI_MID,
+    self.add_flow(dp, FlowRider.PRI_MID,
                   match, actions)
 
   # Add override (high priority) to flood traffic from MAC
@@ -113,7 +113,7 @@ class KiwiPycon(app_manager.RyuApp):
     match   = parser.OFPMatch(eth_src = src_mac)
     actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, KiwiPycon.PRI_HIGH,
+    self.add_flow(dp, FlowRider.PRI_HIGH,
                   match, actions)
 
   # Delete flow to block traffic from a mac
@@ -130,23 +130,23 @@ class KiwiPycon(app_manager.RyuApp):
     self.del_flows(dp)
 
     self.logger.info("Blocking traffic from h1's port by default")
-    match   = parser.OFPMatch(in_port = KiwiPycon.PORT_H1)
+    match   = parser.OFPMatch(in_port = FlowRider.PORT_H1)
     actions = None
-    self.add_flow(dp, KiwiPycon.PRI_LOW,
+    self.add_flow(dp, FlowRider.PRI_LOW,
                   match, actions)
 
     self.logger.info("Allowing traffic from h2's port by default")
-    match   = parser.OFPMatch(in_port = KiwiPycon.PORT_H2)
+    match   = parser.OFPMatch(in_port = FlowRider.PORT_H2)
     actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, KiwiPycon.PRI_LOW,
+    self.add_flow(dp, FlowRider.PRI_LOW,
                   match, actions)
 
     self.logger.info("Allowing traffic from h3's port by default")
-    match   = parser.OFPMatch(in_port = KiwiPycon.PORT_H3)
+    match   = parser.OFPMatch(in_port = FlowRider.PORT_H3)
     actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, KiwiPycon.PRI_LOW,
+    self.add_flow(dp, FlowRider.PRI_LOW,
                   match, actions)
 
 
@@ -156,13 +156,29 @@ class KiwiPycon(app_manager.RyuApp):
     parser = dp.ofproto_parser
 
     self.logger.info("Request notify on UDP from h1")
-    match   = parser.OFPMatch(in_port  = KiwiPycon.PORT_H1,
+    match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
                               eth_type = ether.ETH_TYPE_IP,
                               ip_proto = inet.IPPROTO_UDP)
     actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, KiwiPycon.PRI_MID,
+    self.add_flow(dp, FlowRider.PRI_MID,
                   match, actions)
+
+  # Ask switch to send us SYN packets from host 1
+  def add_notify_on_syn_from_host_1(self, dp):
+      ofp    = dp.ofproto_v1_3
+      parser = dp.ofproto_v1_3_parser
+
+      self.logger.info("Request notify on SYN packets from h1")
+      match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
+      eth_type = ether.ETH_TYPE_IP,
+      ip_proto = inet.IPPROTO_TCP,
+      tcp_flags = tcp.TCP_SYN)
+      actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
+      ofp.OFPCML_NO_BUFFER)]
+      self.add_flow(dp, FlowRider.PRI_MID,
+      match, actions)
+
 
   @set_ev_cls(ofp_event.EventOFPStateChange,
               MAIN_DISPATCHER)
@@ -179,13 +195,15 @@ class KiwiPycon(app_manager.RyuApp):
     pkt = packet.Packet(ev.msg.data)
     eth = pkt.get_protocol(ethernet.ethernet)
 #    ipv4 = pkt.get_protocol(ipv4.ipv4)
-    self.logger.info("UDP received from %s" % pkt)
-    self.logger.info("UDP received from %s" % eth.src)
+    #self.logger.info("UDP received from %s" % pkt)
+    #self.logger.info("UDP received from %s" % eth.src)
     self.logger.info("Connection attempt from from %s" % eth.src)
+    if pkt.has_flags(tcp.TCP_SYN):
+        self.logger.info("SYN packet, sending out keys")
+        key = self.make_key()
+        self.send_key(key, '172.31.1.2')
+        self.send_key(key, '172.31.1.1')
     self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
-    key = self.make_key()
-    self.send_key(key, '172.31.1.2')
-    self.send_key(key, '172.31.1.1')
 
    # Send key when triggered
   def send_key(self, key, HOST):
