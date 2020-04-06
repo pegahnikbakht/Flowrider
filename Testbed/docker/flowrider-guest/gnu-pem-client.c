@@ -22,8 +22,8 @@
  * verification. Note that error recovery is minimal for simplicity.
  */
 
- //#define SERVER_IP "172.31.1.2"
- #define SERVER_IP "127.0.0.1"
+ #define SERVER_IP "172.31.1.2"
+ //#define SERVER_IP "127.0.0.1"
  // The TCP port number that the server is running on, which we will connect to.
  #define SERVER_PORT 50556
 
