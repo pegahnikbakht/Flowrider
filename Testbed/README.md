@@ -2,7 +2,7 @@
   https://ewen.mcneill.gen.nz/blog/entry/2014-10-07-ryu-and-openvswitch-on-docker/
 and  https://naos.co.nz/talks/seize-control-with-ryu/seize-control-with-ryu.pdf*
 
-  
+
 # Build Instructions
 
   **Building the Ryu base:**
@@ -27,3 +27,7 @@ and  https://naos.co.nz/talks/seize-control-with-ryu/seize-control-with-ryu.pdf*
 
 ### Cleanup
     ./cleanup.sh
+
+
+## Runnning the tests int he container:
+for run in {1..10}; do (time ./psk-client); done
