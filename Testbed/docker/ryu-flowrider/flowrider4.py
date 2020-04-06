@@ -116,11 +116,6 @@ class FlowRider(app_manager.RyuApp):
     self.add_flow(dp, FlowRider.PRI_HIGH,
                   match, actions)
 
-  # Delete flow to block traffic from a mac
-  def block_traffic_from_mac(self, dp, src_mac):
-    self.logger.info("deleting flow from %s" % src_mac)
-    self.del_flows(dp)
-
   # Add (low priority) defaults that block traffic)
   def allow_traffic_by_default(self, dp):
     ofp    = dp.ofproto
@@ -180,7 +175,6 @@ class FlowRider(app_manager.RyuApp):
       self.add_flow(dp, FlowRider.PRI_MID,
       match, actions)
 
-
   @set_ev_cls(ofp_event.EventOFPStateChange,
               MAIN_DISPATCHER)
   def new_connection(self, ev):
@@ -189,6 +183,7 @@ class FlowRider(app_manager.RyuApp):
     self.allow_traffic_by_default(dp)
     self.flood_all_arp(dp)
     self.add_notify_on_udp_from_host_1(dp)
+    self.add_notify_on_syn_from_host_1(dp)
 
   @set_ev_cls(ofp_event.EventOFPPacketIn,
               MAIN_DISPATCHER)
@@ -214,7 +209,7 @@ class FlowRider(app_manager.RyuApp):
     self.logger.info("Sending key information to %s" % HOST)
     s.sendall(key)
 #    s.sendall(b'THIS IS THE PRE-SHARED KEY.')
-    print('Done')
+    print('Key distribution done')
     s.close()
 
   def make_key(self):
