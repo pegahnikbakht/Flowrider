@@ -129,9 +129,10 @@ class FlowRider(app_manager.RyuApp):
     self.logger.info("Clearing existing flows")
     self.del_flows(dp)
 
-    self.logger.info("Blocking traffic from h1's port by default")
+    self.logger.info("Allowing traffic from h1's port by default")
     match   = parser.OFPMatch(in_port = FlowRider.PORT_H1)
-    actions = None
+    actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
+                                      ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, FlowRider.PRI_LOW,
                   match, actions)
 
@@ -200,8 +201,8 @@ class FlowRider(app_manager.RyuApp):
     self.logger.info("Connection attempt from from %s" % eth.src)
     self.logger.info("SYN packet, sending out keys")
     key = self.make_key()
-    self.send_key(key, '172.31.1.1')
     self.send_key(key, '172.31.1.2')
+    self.send_key(key, '172.31.1.1')
     self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
