@@ -36,9 +36,9 @@ while True:
 			   print("Received:", buf)
 			   break
    finally:
-   f = open("psk.txt", "w")
-   f.write(buf)
-   f.close()
+    f = open("psk.txt", "w")
+    f.write(buf)
+    f.close()
 #   msg = 'Thank you for connecting'+ "\r\n"
 #   clientsocket.send(msg.encode('ascii'))
    clientsocket.close()
