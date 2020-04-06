@@ -40,7 +40,7 @@
  */
 
 #define MAX_BUF 1024
-#define PORT 5556               /* listen to 5556 port */
+#define PORT 50556               /* listen to 5556 port */
 
 int main(void)
 {
@@ -155,7 +155,7 @@ int main(void)
                 /* see the Getting peer's information example */
                 /* print_info(session); */
 
-                for (;;) {
+/*                for (;;) {
                         LOOP_CHECK(ret, gnutls_record_recv(session, buffer, MAX_BUF));
 
                         if (ret == 0) {
@@ -172,11 +172,11 @@ int main(void)
                                         ret);
                                 break;
                         } else if (ret > 0) {
-                                /* echo data back to the client
-                                 */
+                                // echo data back to the client
                                 CHECK(gnutls_record_send(session, buffer, ret));
                         }
                 }
+*/                
                 printf("\n");
                 /* do not wait for the peer to close the connection.
                  */
