@@ -39,7 +39,7 @@
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
 //#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
-#define PSK_CONFIG "/home/nicolae/Flowrider/Testbed/docker/flowrider-guest/psk.txt"
+#define PSK_CONFIG "psk.txt"
 // IPv4 address of the server which we will connect to.
 #define SERVER_IP "172.31.1.2"
 //#define SERVER_IP "127.0.0.1"
@@ -279,17 +279,17 @@ void error_exit(const char *msg)
 
 char* get_psk() {
     FILE *fp;
-    char str[257];
+    char str[28];
     char* filename = PSK_CONFIG;
-    char *psk = malloc (sizeof (char) * 256);
+    char *psk = malloc (sizeof (char) * 27);
 
     fp = fopen(filename, "r");
     if (fp == NULL){
         printf("Could not open file %s",filename);
         return NULL;
     }
-    fgets(str, 257, fp);
+    fgets(str, 28, fp);
     fclose(fp);
-    strncpy(psk, str, 256);
+    strncpy(psk, str, 27);
     return psk;
 }

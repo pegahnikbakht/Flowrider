@@ -113,7 +113,7 @@ class FlowRider(app_manager.RyuApp):
     match   = parser.OFPMatch(eth_src = src_mac)
     actions = [parser.OFPActionOutput(ofp.OFPP_FLOOD,
                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, FlowRider.PRI_HIGH,
+    self.add_flow(dp, FlowRider.PRI_MID,
                   match, actions)
 
   # Add (low priority) defaults that block traffic)
@@ -160,20 +160,34 @@ class FlowRider(app_manager.RyuApp):
     self.add_flow(dp, FlowRider.PRI_MID,
                   match, actions)
 
-  # Ask switch to send us SYN packets from host 1
- # def add_notify_on_syn_from_host_1(self, dp):
-    #  ofp    = dp.ofproto_v1_3
-    #  parser = dp.ofproto_v1_3_parser
 
-     # self.logger.info("Request notify on SYN packets from h1")
-      #match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
-      #eth_type = ether.ETH_TYPE_IP,
-      #ip_proto = inet.IPPROTO_TCP,
-      #tcp_flags = tcp.TCP_SYN)
-      #actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
-      #ofp.OFPCML_NO_BUFFER)]
-      #self.add_flow(dp, FlowRider.PRI_MID,
-      #match, actions)
+   def add_notify_on_tcp_from_host_1(self, dp):
+     ofp = dp.ofproto
+     parser = dp.ofproto_parser
+
+     self.logger.info("Request notify on TCP from h1")
+     match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
+                               eth_type = ether.ETH_TYPE_IP,
+                               ip_proto = inet.IPPROTO_TCP)
+     actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
+                                       ofp.OFPCML_NO_BUFFER)]
+     self.add_flow(dp, FlowRider.PRI_HIGH,
+                   match, actions)
+
+  # Ask switch to send us SYN packets from host 1
+  #def add_notify_on_syn_from_host_1(self, dp):
+#      ofp    = dp.ofproto_v1_3
+#      parser = dp.ofproto_v1_3_parser
+
+#      self.logger.info("Request notify on SYN packets from h1")
+#      match   = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
+#      eth_type = ether.ETH_TYPE_IP,
+#      ip_proto = inet.IPPROTO_TCP,
+#      tcp_flags = tcp.TCP_SYN)
+#      actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
+#      ofp.OFPCML_NO_BUFFER)]
+#      self.add_flow(dp, FlowRider.PRI_MID,
+#      match, actions)
 
   @set_ev_cls(ofp_event.EventOFPStateChange,
               MAIN_DISPATCHER)
@@ -194,21 +208,21 @@ class FlowRider(app_manager.RyuApp):
     #self.logger.info("UDP received from %s" % pkt)
     #self.logger.info("UDP received from %s" % eth.src)
     self.logger.info("Connection attempt from from %s" % eth.src)
-    self.logger.info("SYN packet, sending out keys")
-    key = self.make_key()
-    self.send_key(key, '172.31.1.2')
-    self.send_key(key, '172.31.1.1')
+    self.logger.info("TCP packet, sending out keys")
+    #key = self.make_key()
+    self.send_key('172.31.1.2')
+    self.send_key('172.31.1.1')
     self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
-  def send_key(self, key, HOST):
+  def send_key(self, HOST):
     PORT = 5000          # The port used by the server
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.logger.info("Connecting to the endpoint")
     s.connect((HOST, PORT))
     self.logger.info("Sending key information to %s" % HOST)
-    s.sendall(key)
-#    s.sendall(b'THIS IS THE PRE-SHARED KEY.')
+    #s.sendall(key)
+    s.sendall(b'THIS IS THE PRE-SHARED KEY.')
     print('Key distribution done')
     s.close()
 
