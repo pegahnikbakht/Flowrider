@@ -204,14 +204,14 @@ class FlowRider(app_manager.RyuApp):
   def handle_packet(self, ev):
     pkt = packet.Packet(ev.msg.data)
     eth = pkt.get_protocol(ethernet.ethernet)
-#    ipv4 = pkt.get_protocol(ipv4.ipv4)
+    ipv4 = pkt.get_protocol(ipv4.ipv4)
     #self.logger.info("UDP received from %s" % pkt)
     #self.logger.info("UDP received from %s" % eth.src)
-    self.logger.info("Connection attempt from from %s" % eth.src)
+    self.logger.info("Connection attempt from from %s to %s" % ipv4.src, ipv4.dst)
     self.logger.info("TCP packet, sending out keys")
     #key = self.make_key()
     self.send_key('172.31.1.2')
-    self.send_key('172.31.1.1')
+    #self.send_key('172.31.1.1')
     self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
