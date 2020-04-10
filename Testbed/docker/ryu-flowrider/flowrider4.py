@@ -116,6 +116,19 @@ class FlowRider(app_manager.RyuApp):
     self.add_flow(dp, FlowRider.PRI_MID,
                   match, actions)
 
+  # Add override (high priority) to flood traffic from MAC
+  def push_packet_back(self, ev):
+    msg = ev.msg
+    dp = msg.datapath
+    ofp = dp.ofproto
+    ofp_parser = dp.ofproto_parser
+    self.logger.info("Pushing the packet out")
+    actions = [ofp_parser.OFPActionOutput(ofp.OFPP_FLOOD, 0)]
+    req = ofp_parser.OFPPacketOut(dp, ofp.OFP_NO_BUFFER,
+                              FlowRider.PORT_H2, actions)
+    dp.send_msg(req)
+
+
   # Add (low priority) defaults that block traffic)
   def allow_traffic_by_default(self, dp):
     ofp    = dp.ofproto
@@ -202,6 +215,8 @@ class FlowRider(app_manager.RyuApp):
   @set_ev_cls(ofp_event.EventOFPPacketIn,
               MAIN_DISPATCHER)
   def handle_packet(self, ev):
+    client = '172.31.1.1'
+    server = '172.31.1.2'
     pkt = packet.Packet(ev.msg.data)
     eth = pkt.get_protocol(ethernet.ethernet)
     ip = pkt.get_protocol(ipv4.ipv4)
@@ -209,11 +224,15 @@ class FlowRider(app_manager.RyuApp):
     #self.logger.info("UDP received from %s" % eth.src)
     self.logger.info("Connection attempt from from %s" % ip.src)
     self.logger.info("Conntection attempt to %s" %ip.dst)
-    self.logger.info("TCP packet, sending out keys")
-    #key = self.make_key()
-    self.send_key('172.31.1.2')
-    #self.send_key('172.31.1.1')
-    self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
+
+    if ip.src==client and ip.dst==server:
+        self.logger.info("FlowRider TCP packet, sending out keys")
+        #key = self.make_key()
+        self.send_key(client)
+        self.send_key(server)
+        self.push_packet_back(ev)
+    else:
+        self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
   def send_key(self, HOST):
