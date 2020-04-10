@@ -165,7 +165,6 @@ class FlowRider(app_manager.RyuApp):
   def add_notify_on_tcp_from_host_1(self, dp):
     ofp    = dp.ofproto
     parser = dp.ofproto_parser
-
     self.logger.info("Request notify on TCP from h1")
     match  = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
                                eth_type = ether.ETH_TYPE_IP,
