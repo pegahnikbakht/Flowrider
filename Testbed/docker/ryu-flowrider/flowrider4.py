@@ -162,17 +162,17 @@ class FlowRider(app_manager.RyuApp):
 
 
 
-  def add_notify_on_tcp_from_host_1(self, dp):
-    ofp    = dp.ofproto
-    parser = dp.ofproto_parser
-    self.logger.info("Request notify on TCP from h1")
-    match  = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
-                               eth_type = ether.ETH_TYPE_IP,
-                               ip_proto = inet.IPPROTO_TCP)
-    actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
-                                       ofp.OFPCML_NO_BUFFER)]
-    self.add_flow(dp, FlowRider.PRI_HIGH,
-                   match, actions)
+#  def add_notify_on_tcp_from_host_1(self, dp):
+#    ofp    = dp.ofproto
+#    parser = dp.ofproto_parser
+#    self.logger.info("Request notify on TCP from h1")
+#    match  = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
+#                               eth_type = ether.ETH_TYPE_IP,
+#                               ip_proto = inet.IPPROTO_TCP)
+#    actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
+#                                       ofp.OFPCML_NO_BUFFER)]
+#    self.add_flow(dp, FlowRider.PRI_HIGH,
+#                   match, actions)
 
   # Ask switch to send us SYN packets from host 1
   #def add_notify_on_syn_from_host_1(self, dp):
