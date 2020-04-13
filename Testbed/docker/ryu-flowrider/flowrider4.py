@@ -222,12 +222,13 @@ class FlowRider(app_manager.RyuApp):
     pkt = packet.Packet(ev.msg.data)
     eth = pkt.get_protocol(ethernet.ethernet)
     ip = pkt.get_protocol(ipv4.ipv4)
+    fpkt = pkt.get_protocol(tcp.tcp)
     #self.logger.info("UDP received from %s" % pkt)
     #self.logger.info("UDP received from %s" % eth.src)
     self.logger.info("Connection attempt from from %s" % ip.src)
     self.logger.info("Conntection attempt to %s" %ip.dst)
 
-    if ip.src==client and ip.dst==server:
+    if ip.src==client and ip.dst==server and fpkt.has_flags(tcp.TCP_SYN):
         self.logger.info("FlowRider TCP packet, sending out keys")
         #key = self.make_key()
         #self.send_key(client)
