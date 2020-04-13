@@ -248,5 +248,5 @@ class FlowRider(app_manager.RyuApp):
     s.close()
 
   def make_key(self):
-    key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(27))
+    key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(128))
     return key

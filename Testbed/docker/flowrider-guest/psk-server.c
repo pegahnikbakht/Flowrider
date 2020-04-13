@@ -210,7 +210,7 @@ int psk_creds(gnutls_session_t session, const char *username, gnutls_datum_t *ke
     // and return that. If the username does not exist, return a negative
     // number (see the manual).
 
-    char *psk = malloc (sizeof (char) * 27);
+    char *psk = malloc (sizeof (char) * 128);
     char* get_psk();
     psk = get_psk();
 
@@ -305,17 +305,17 @@ void error_exit(const char *msg)
 
 char* get_psk() {
     FILE *fp;
-    char str[28];
+    char str[129];
     char* filename = PSK_CONFIG;
-    char *psk  = malloc (sizeof (char) * 28);
+    char *psk  = malloc (sizeof (char) * 129);
 
     fp = fopen(filename, "r");
     if (fp == NULL){
         printf("Could not open file %s",filename);
         return NULL;
     }
-    fgets(str, 28, fp);
+    fgets(str, 129, fp);
     fclose(fp);
-    strncpy(psk, str, 28);
+    strncpy(psk, str, 129);
     return psk;
 }

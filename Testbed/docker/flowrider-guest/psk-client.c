@@ -279,17 +279,17 @@ void error_exit(const char *msg)
 
 char* get_psk() {
     FILE *fp;
-    char str[28];
+    char str[129];
     char* filename = PSK_CONFIG;
-    char *psk = malloc (sizeof (char) * 27);
+    char *psk = malloc (sizeof (char) * 128);
 
     fp = fopen(filename, "r");
     if (fp == NULL){
         printf("Could not open file %s",filename);
         return NULL;
     }
-    fgets(str, 28, fp);
+    fgets(str, 129, fp);
     fclose(fp);
-    strncpy(psk, str, 27);
+    strncpy(psk, str, 128);
     return psk;
 }

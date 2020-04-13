@@ -27,7 +27,7 @@ while True:
    buf = b''  # Buffer to hold received client data
    try:
 	   while True:
-		   data = clientsocket.recv(27)
+		   data = clientsocket.recv(128)
 		   if data:
 			   # Client sent us data. Append to buffer
 			   buf += data
