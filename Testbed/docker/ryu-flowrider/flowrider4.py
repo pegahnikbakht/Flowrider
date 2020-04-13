@@ -230,7 +230,8 @@ class FlowRider(app_manager.RyuApp):
         self.logger.info("FlowRider TCP packet, sending out keys")
         #key = self.make_key()
         #self.send_key(client)
-        self.send_key(server)
+        self.send_key('172.31.1.2')
+        self.logger.info("Sent keys, pushing packets back")
         self.push_packet_back(ev)
     else:
         self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
