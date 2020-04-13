@@ -182,7 +182,8 @@ class FlowRider(app_manager.RyuApp):
     match  = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
                              eth_type = ether.ETH_TYPE_IP,
                              ip_proto = inet.IPPROTO_TCP,
-                             tcp_flags = 0x02)
+                             ipv4_src = '172.31.1.1',
+                             ipv4_dst = '172.31.1.2')
     actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
                                        ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, FlowRider.PRI_HIGH,
