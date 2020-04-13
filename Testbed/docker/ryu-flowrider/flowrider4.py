@@ -41,7 +41,8 @@ from ryu.ofproto            import ofproto_v1_3, ofproto_v1_3_parser, ether, ine
 from ryu.lib.packet         import packet, ethernet, ipv4, tcp
 import socket
 import thread
-import secrets
+import random
+import string
 
 
 class FlowRider(app_manager.RyuApp):
@@ -245,11 +246,11 @@ class FlowRider(app_manager.RyuApp):
     self.logger.info("Connecting to the endpoint")
     s.connect((HOST, PORT))
     self.logger.info("Sending key information to %s" % HOST)
-    #s.sendall(key)
-    s.sendall(b'THIS IS THE PRE-SHARED KEY.')
+    s.sendall(key)
+    #s.sendall(b'THIS IS THE PRE-SHARED KEY.')
     print('Key distribution done')
     s.close()
 
   def make_key(self):
-    key = secrets.token_hex(128)
+    key = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(27))
     return key
