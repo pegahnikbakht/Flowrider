@@ -224,16 +224,11 @@ class FlowRider(app_manager.RyuApp):
     eth = pkt.get_protocol(ethernet.ethernet)
     ip = pkt.get_protocol(ipv4.ipv4)
     fpkt = pkt.get_protocol(tcp.tcp)
-    #self.logger.info("UDP received from %s" % pkt)
-    #self.logger.info("UDP received from %s" % eth.src)
-    #self.logger.info("Connection attempt from from %s" % ip.src)
-    #self.logger.info("Conntection attempt to %s" %ip.dst)
-
     if (ip.src==client) and (ip.dst==server) and (fpkt.bits==0x002):
         self.logger.info("FlowRider TCP packet, sending out keys")
-        #key = self.make_key()
-        self.send_key(client)
-        self.send_key(server)
+        key = self.make_key()
+        self.send_key(key, client)
+        self.send_key(key, server)
         #self.logger.info("Sent keys, pushing packets back")
         self.push_packet_back(ev)
     else:
@@ -241,7 +236,7 @@ class FlowRider(app_manager.RyuApp):
         #self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
-  def send_key(self, HOST):
+  def send_key(self, key, HOST):
     PORT = 5000          # The port used by the server
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #self.logger.info("Connecting to the endpoint")
