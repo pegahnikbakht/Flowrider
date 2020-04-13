@@ -8,6 +8,7 @@ FROM ubuntu:19.04
 
 RUN apt-get update
 Run apt-get install -qy  dnsutils iputils-ping netcat ipython
+RUN apt-get install -qy  gnutls-bin libgnutls28-dev
 
 # Add application and data into container
 COPY . /endpoint
