@@ -18,7 +18,7 @@
 
 #define KEYFILE "certs/key.pem"
 #define CERTFILE "certs/cert.pem"
-#define CAFILE "/etc/ssl/certs/ca-certificates.crt"
+#define CAFILE "certs/ca-certificates.crt"
 #define CRLFILE "crl.pem"
 
 #define CHECK(x) assert((x)>=0)
