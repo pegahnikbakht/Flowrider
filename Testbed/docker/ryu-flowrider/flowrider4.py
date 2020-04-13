@@ -125,7 +125,7 @@ class FlowRider(app_manager.RyuApp):
     self.logger.info("Pushing the packet out")
     actions = [ofp_parser.OFPActionOutput(ofp.OFPP_FLOOD, 0)]
     req = ofp_parser.OFPPacketOut(dp, ofp.OFP_NO_BUFFER,
-                              FlowRider.PORT_H2, actions)
+                              ofp.OFPP_CONTROLLER, actions)
     dp.send_msg(req)
 
 
@@ -180,8 +180,9 @@ class FlowRider(app_manager.RyuApp):
     parser = dp.ofproto_parser
     self.logger.info("Request notify on TCP from h1")
     match  = parser.OFPMatch(in_port  = FlowRider.PORT_H1,
-                               eth_type = ether.ETH_TYPE_IP,
-                               ip_proto = inet.IPPROTO_TCP)
+                             eth_type = ether.ETH_TYPE_IP,
+                             ip_proto = inet.IPPROTO_TCP,
+                             tcp_flags = 0x02)
     actions = [parser.OFPActionOutput(ofp.OFPP_CONTROLLER,
                                        ofp.OFPCML_NO_BUFFER)]
     self.add_flow(dp, FlowRider.PRI_HIGH,
@@ -228,7 +229,7 @@ class FlowRider(app_manager.RyuApp):
     if ip.src==client and ip.dst==server:
         self.logger.info("FlowRider TCP packet, sending out keys")
         #key = self.make_key()
-        self.send_key(client)
+        #self.send_key(client)
         self.send_key(server)
         self.push_packet_back(ev)
     else:
