@@ -224,27 +224,26 @@ class FlowRider(app_manager.RyuApp):
     eth = pkt.get_protocol(ethernet.ethernet)
     ip = pkt.get_protocol(ipv4.ipv4)
     fpkt = pkt.get_protocol(tcp.tcp)
-    if (ip.src==client) and (ip.dst==server) and (fpkt.bits==0x002):
-        self.logger.info("FlowRider TCP packet, sending out keys")
-        key = self.make_key()
-        self.send_key(key, client)
-        self.send_key(key, server)
-        #self.logger.info("Sent keys, pushing packets back")
-        self.push_packet_back(ev)
-    else:
-        self.push_packet_back(ev)
-        #self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
+# TWO options follow - choose depending on the implementation!
+# PKI Implementation
+    self.push_packet_back(ev)
+# PSK Implementation
+#    if (ip.src==client) and (ip.dst==server) and (fpkt.bits==0x002):
+#        self.logger.info("FlowRider TCP packet, sending out keys")
+#        key = self.make_key()
+#        self.send_key(key, client)
+#        self.send_key(key, server)
+#        self.push_packet_back(ev)
+#    else:
+#        self.push_packet_back(ev)
 
    # Send key when triggered
   def send_key(self, key, HOST):
     PORT = 5000          # The port used by the server
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #self.logger.info("Connecting to the endpoint")
     s.connect((HOST, PORT))
-    #self.logger.info("Sending key information to %s" % HOST)
     s.sendall(key)
-    #s.sendall(b'THIS IS THE PRE-SHARED KEY.')
-    print('Key distribution done')
+    self.logger.info("Key distribution done")
     s.close()
 
   def make_key(self):
