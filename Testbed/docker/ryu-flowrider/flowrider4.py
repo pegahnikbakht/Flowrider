@@ -123,10 +123,10 @@ class FlowRider(app_manager.RyuApp):
     dp = msg.datapath
     ofp = dp.ofproto
     ofp_parser = dp.ofproto_parser
-    self.logger.info("Pushing the packet out")
+    #self.logger.info("Pushing the packet out")
     actions = [ofp_parser.OFPActionOutput(ofp.OFPP_FLOOD, 0)]
     req = ofp_parser.OFPPacketOut(dp, ofp.OFP_NO_BUFFER,
-                              ofp.OFPP_CONTROLLER, actions)
+                              ofp.OFPP_CONTROLLER, actions, msg.data)
     dp.send_msg(req)
 
 
@@ -226,26 +226,27 @@ class FlowRider(app_manager.RyuApp):
     fpkt = pkt.get_protocol(tcp.tcp)
     #self.logger.info("UDP received from %s" % pkt)
     #self.logger.info("UDP received from %s" % eth.src)
-    self.logger.info("Connection attempt from from %s" % ip.src)
-    self.logger.info("Conntection attempt to %s" %ip.dst)
+    #self.logger.info("Connection attempt from from %s" % ip.src)
+    #self.logger.info("Conntection attempt to %s" %ip.dst)
 
-    if ip.src==client and ip.dst==server and fpkt.has_flags(tcp.TCP_SYN):
+    if (ip.src==client) and (ip.dst==server) and (fpkt.bits==0x002):
         self.logger.info("FlowRider TCP packet, sending out keys")
         #key = self.make_key()
-        #self.send_key(client)
-        self.send_key('172.31.1.2')
-        self.logger.info("Sent keys, pushing packets back")
+        self.send_key(client)
+        self.send_key(server)
+        #self.logger.info("Sent keys, pushing packets back")
         self.push_packet_back(ev)
     else:
-        self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
+        self.push_packet_back(ev)
+        #self.permit_traffic_from_mac(ev.msg.datapath, eth.src)
 
    # Send key when triggered
   def send_key(self, HOST):
     PORT = 5000          # The port used by the server
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.logger.info("Connecting to the endpoint")
+    #self.logger.info("Connecting to the endpoint")
     s.connect((HOST, PORT))
-    self.logger.info("Sending key information to %s" % HOST)
+    #self.logger.info("Sending key information to %s" % HOST)
     s.sendall(key)
     #s.sendall(b'THIS IS THE PRE-SHARED KEY.')
     print('Key distribution done')
