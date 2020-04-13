@@ -39,7 +39,7 @@
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
 //#define SECRET_KEY "THIS IS THE PRE-SHARED KEY."
-#define PSK_CONFIG "./psk.txt"
+#define PSK_CONFIG "./psk-client.txt"
 // IPv4 address of the server which we will connect to.
 //#define SERVER_IP "172.31.1.2"
 #define SERVER_IP "127.0.0.1"

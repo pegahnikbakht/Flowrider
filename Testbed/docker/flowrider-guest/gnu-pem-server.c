@@ -77,9 +77,9 @@ int main(void)
                                                    KEYFILE,
                                                    GNUTLS_X509_FMT_PEM));
 
-        CHECK(gnutls_certificate_set_ocsp_status_request_file(x509_cred,
-                                                              OCSP_STATUS_FILE,
-                                                              0));
+        //CHECK(gnutls_certificate_set_ocsp_status_request_file(x509_cred,
+         //                                                     OCSP_STATUS_FILE,
+          //                                                    0));
 
         CHECK(gnutls_priority_init(&priority_cache, NULL, NULL));
 
