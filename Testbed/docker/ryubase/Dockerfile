@@ -16,4 +16,5 @@ ENV HOME /root
 WORKDIR /root
 
 ADD requirements.txt /root/requirements.txt
+RUN pip install python2-secrets
 RUN pip install -r /root/requirements.txt

@@ -1,14 +1,14 @@
+
+
 # Ryu SDN Example Guest -- for the FlowRider2020 example
 #
 
 
-FROM python:alpine3.7
+FROM ubuntu:19.04
 
-RUN apk update
-RUN apk add  bind-tools
-RUN apk add  iputils net-tools
-RUN apk add --no-cache bash
-
+RUN apt-get update
+Run apt-get install -qy  dnsutils iputils-ping netcat ipython
+RUN apt-get install -qy  gnutls-bin libgnutls28-dev
 
 # Add application and data into container
 COPY . /endpoint

@@ -1,95 +1,116 @@
-/* From https://wiki.openssl.org/index.php/SSL/TLS_Client */
-
-#define HOST_NAME "www.random.org"
-#define HOST_PORT "443"
-#define HOST_RESOURCE "/cgi-bin/randbyte?nbytes=32&format=h"
-
-long res = 1;
-
-SSL_CTX* ctx = NULL;
-BIO *web = NULL, *out = NULL;
-SSL *ssl = NULL;
-
-init_openssl_library();
-
-const SSL_METHOD* method = SSLv23_method();
-if(!(NULL != method)) handleFailure();
-
-ctx = SSL_CTX_new(method);
-if(!(ctx != NULL)) handleFailure();
-
-/* Cannot fail ??? */
-SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, verify_callback);
-
-/* Cannot fail ??? */
-SSL_CTX_set_verify_depth(ctx, 4);
-
-/* Cannot fail ??? */
-const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-SSL_CTX_set_options(ctx, flags);
-
-res = SSL_CTX_load_verify_locations(ctx, "random-org-chain.pem", NULL);
-if(!(1 == res)) handleFailure();
-
-web = BIO_new_ssl_connect(ctx);
-if(!(web != NULL)) handleFailure();
-
-res = BIO_set_conn_hostname(web, HOST_NAME ":" HOST_PORT);
-if(!(1 == res)) handleFailure();
-
-BIO_get_ssl(web, &ssl);
-if(!(ssl != NULL)) handleFailure();
-
-const char* const PREFERRED_CIPHERS = "HIGH:!aNULL:!kRSA:!PSK:!SRP:!MD5:!RC4";
-res = SSL_set_cipher_list(ssl, PREFERRED_CIPHERS);
-if(!(1 == res)) handleFailure();
-
-res = SSL_set_tlsext_host_name(ssl, HOST_NAME);
-if(!(1 == res)) handleFailure();
-
-out = BIO_new_fp(stdout, BIO_NOCLOSE);
-if(!(NULL != out)) handleFailure();
-
-res = BIO_do_connect(web);
-if(!(1 == res)) handleFailure();
-
-res = BIO_do_handshake(web);
-if(!(1 == res)) handleFailure();
-
-/* Step 1: verify a server certificate was presented during the negotiation */
-X509* cert = SSL_get_peer_certificate(ssl);
-if(cert) { X509_free(cert); } /* Free immediately */
-if(NULL == cert) handleFailure();
-
-/* Step 2: verify the result of chain verification */
-/* Verification performed according to RFC 4158    */
-res = SSL_get_verify_result(ssl);
-if(!(X509_V_OK == res)) handleFailure();
-
-/* Step 3: hostname verification */
-/* An exercise left to the reader */
-
-BIO_puts(web, "GET " HOST_RESOURCE " HTTP/1.1\r\n"
-              "Host: " HOST_NAME "\r\n"
-              "Connection: close\r\n\r\n");
-BIO_puts(out, "\n");
-
-int len = 0;
-do
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+#include <malloc.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <resolv.h>
+#include <netdb.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#define FAIL    -1
+int OpenConnection(const char *hostname, int port)
 {
-  char buff[1536] = {};
-  len = BIO_read(web, buff, sizeof(buff));
-
-  if(len > 0)
-    BIO_write(out, buff, len);
-
-} while (len > 0 || BIO_should_retry(web));
-
-if(out)
-  BIO_free(out);
-
-if(web != NULL)
-  BIO_free_all(web);
-
-if(NULL != ctx)
-  SSL_CTX_free(ctx);
+    int sd;
+    struct hostent *host;
+    struct sockaddr_in addr;
+    if ( (host = gethostbyname(hostname)) == NULL )
+    {
+        perror(hostname);
+        abort();
+    }
+    sd = socket(PF_INET, SOCK_STREAM, 0);
+    bzero(&addr, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = *(long*)(host->h_addr);
+    if ( connect(sd, (struct sockaddr*)&addr, sizeof(addr)) != 0 )
+    {
+        close(sd);
+        perror(hostname);
+        abort();
+    }
+    return sd;
+}
+SSL_CTX* InitCTX(void)
+{
+    SSL_METHOD *method;
+    SSL_CTX *ctx;
+    OpenSSL_add_all_algorithms();  /* Load cryptos, et.al. */
+    SSL_load_error_strings();   /* Bring in and register error messages */
+    method = TLSv1_2_client_method();  /* Create new client-method instance */
+    ctx = SSL_CTX_new(method);   /* Create new context */
+    if ( ctx == NULL )
+    {
+        ERR_print_errors_fp(stderr);
+        abort();
+    }
+    return ctx;
+}
+void ShowCerts(SSL* ssl)
+{
+    X509 *cert;
+    char *line;
+    cert = SSL_get_peer_certificate(ssl); /* get the server's certificate */
+    if ( cert != NULL )
+    {
+        printf("Server certificates:\n");
+        line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+        printf("Subject: %s\n", line);
+        free(line);       /* free the malloc'ed string */
+        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
+        printf("Issuer: %s\n", line);
+        free(line);       /* free the malloc'ed string */
+        X509_free(cert);     /* free the malloc'ed certificate copy */
+    }
+    else
+        printf("Info: No client certificates configured.\n");
+}
+int main(int count, char *strings[])
+{
+    SSL_CTX *ctx;
+    int server;
+    SSL *ssl;
+    char buf[1024];
+    char acClientRequest[1024] = {0};
+    int bytes;
+    char *hostname, *portnum;
+    if ( count != 3 )
+    {
+        printf("usage: %s <hostname> <portnum>\n", strings[0]);
+        exit(0);
+    }
+    SSL_library_init();
+    hostname=strings[1];
+    portnum=strings[2];
+    ctx = InitCTX();
+    server = OpenConnection(hostname, atoi(portnum));
+    ssl = SSL_new(ctx);      /* create new SSL connection state */
+    SSL_set_fd(ssl, server);    /* attach the socket descriptor */
+    if ( SSL_connect(ssl) == FAIL )   /* perform the connection */
+        ERR_print_errors_fp(stderr);
+    else
+    {
+        char acUsername[16] = {0};
+        char acPassword[16] = {0};
+        const char *cpRequestMessage = "<Body>\
+                               <UserName>%s<UserName>\
+                 <Password>%s<Password>\
+                 <\Body>";
+        printf("Enter the User Name : ");
+        scanf("%s",acUsername);
+        printf("\n\nEnter the Password : ");
+        scanf("%s",acPassword);
+        sprintf(acClientRequest, cpRequestMessage, acUsername,acPassword);   /* construct reply */
+        printf("\n\nConnected with %s encryption\n", SSL_get_cipher(ssl));
+        ShowCerts(ssl);        /* get any certs */
+        SSL_write(ssl,acClientRequest, strlen(acClientRequest));   /* encrypt & send message */
+        bytes = SSL_read(ssl, buf, sizeof(buf)); /* get reply & decrypt */
+        buf[bytes] = 0;
+        printf("Received: \"%s\"\n", buf);
+        SSL_free(ssl);        /* release connection state */
+    }
+    close(server);         /* close socket */
+    SSL_CTX_free(ctx);        /* release context */
+    return 0;
+}
