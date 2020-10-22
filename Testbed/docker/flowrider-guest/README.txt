@@ -1,8 +1,5 @@
 Source: https://defuse.ca/gnutls-psk-client-server-example.htm
 
-server: gcc -Wall -o server pem-server.c -L/usr/lib -lssl -lcrypto
-client: gcc -Wall -o client  pem-client.c -L/usr/lib -lssl -lcrypto
-
 PSK:
 
 server: gcc -Wall -Werror -c psk-server.c -o psk-server.o `pkg-config gnutls --cflags` \

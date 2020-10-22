@@ -1,9 +1,9 @@
 # Ryu SDN Container
-# 
+#
 # Loosely based on https://registry.hub.docker.com/u/osrg/ryu/dockerfile/
 # and http://ewen.mcneill.gen.nz/blog/entry/2014-08-31-ryu-on-ubuntu-14-04/
 #
-# Built based on separate Ryu build container, to increase the amount of 
+# Built based on separate Ryu build container, to increase the amount of
 # useful caching that we get; see "two Dockerfile" approach here:
 #
 # http://jpetazzo.github.io/2013/12/01/docker-python-pip-requirements/
@@ -22,7 +22,7 @@ MAINTAINER Nicolae Paladi <nicolae.paladi@eit.lth.se>
 EXPOSE 6633 6653
 
 # Port for the OOB communication
-EXPOSE 5000 
+EXPOSE 5000
 
 # Add Ryu user account
 RUN groupadd --system ryu
@@ -33,5 +33,3 @@ ADD flowrider4.py /home/ryu/flowrider4.py
 
 # Default command is to run Ryu against that application
 CMD ["/bin/su", "-c", "/usr/local/bin/ryu-manager", "/home/ryu/flowrider4.py"]
-
-

@@ -39,6 +39,6 @@ while True:
     f = open("psk.txt", "w")
     f.write(buf)
     f.close()
-#   msg = 'Thank you for connecting'+ "\r\n"
+#   msg = 'Add your data here'+ "\r\n"
 #   clientsocket.send(msg.encode('ascii'))
    clientsocket.close()

@@ -1,6 +1,5 @@
 
-
-# Ryu SDN Example Guest -- for the FlowRider2020 example
+# Ryu SDN Guest for the FlowRider2020 demonstrator
 #
 
 
