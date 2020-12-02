@@ -180,7 +180,7 @@ int main(int argc, char **argv)
     // sending to us.
     printf("------- BEGIN DATA FROM SERVER -------\n");
     FILE *fp;
-    char *filename = "recv.txt";
+    char *filename = IMAGE_FILE;
     char buffer[SIZE];
     fp = fopen(filename, "w");
     res = gnutls_record_recv(session, buffer, SIZE);
