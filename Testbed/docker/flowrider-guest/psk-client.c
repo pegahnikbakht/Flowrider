@@ -48,6 +48,10 @@
 // GnuTLS log level. 9 is the most verbose.
 #define LOG_LEVEL 0
 
+// File name for the image to be transferred
+#define IMAGE_FILE "receive.jpg";
+#define SIZE 1024
+
 int make_one_connection(const char *address, int port);
 void error_exit(const char *msg);
 // GnuTLS callbacks.
@@ -175,18 +179,22 @@ int main(int argc, char **argv)
     // If the handshake worked, we can now receive the data that the server is
     // sending to us.
     //printf("------- BEGIN DATA FROM SERVER -------\n");
-    char buf[100];
-    res = gnutls_record_recv(session, buf, sizeof(buf));
+    int n;
+    FILE *fp;
+    char *filename = "recv.txt";
+    char buffer[SIZE];
+    fp = fopen(filename, "w");
+    res = gnutls_record_recv(session, buffer, SIZE);
     while (res != 0) {
         if (res == GNUTLS_E_REHANDSHAKE) {
             error_exit("Peer wants to re-handshake but we don't support that.\n");
         } else if (gnutls_error_is_fatal(res)) {
             error_exit("Fatal error during read.\n");
         } else if (res > 0) {
-           // fwrite(buf, 1, res, stdout);
-            fflush(stdout);
+          fprintf(fp, "%s", buffer);
+          bzero(buffer, SIZE);
         }
-        res = gnutls_record_recv(session, buf, sizeof(buf));
+    //    res = gnutls_record_recv(session, buf, sizeof(buf));
     }
     //printf("------- END DATA FROM SERVER -------\n");
 

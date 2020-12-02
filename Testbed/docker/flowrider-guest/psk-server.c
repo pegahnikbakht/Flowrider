@@ -39,10 +39,17 @@
 // a configuration file or something and not built-in constant. It also
 // shouldn't be an ASCII string. Use a good CSPRNG!
 #define PSK_CONFIG "./psk.txt"
+
+// File name for the image to be transferred
+#define IMAGE_FILE "send.jpg";
+
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
 #define LOG_LEVEL 0
+#define SIZE 1024
+
+
 
 int accept_one_connection(int port);
 void error_exit(const char *msg);
@@ -152,23 +159,29 @@ int main(int argc, char **argv)
 
     // If all went well, we've established a secure connection to the client.
     // We can now send some data.
-    int i;
-    char buf[100];
-    for (i = 1; i <= 10; i++) {
-        sprintf(buf, "Server %d\r\n", i);
-        do {
+
+    int n;
+    char data[SIZE] = {0};
+    FILE *fp;
+    char *filename = IMAGE_FILE;
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+      perror("[-]Error in reading file.");
+      exit(1);
+    }
+      while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN || fgets(data, SIZE, fp) != NULL){
+          res = gnutls_record_send(session, data, sizeof(data));
             // gnutls_record_send() behaves like send(), so it doesn't always
             // send all of the available data. You should check the return value
             // and send anything it didn't send (just like you would with
             // send()).
-            res = gnutls_record_send(session, buf, strlen(buf));
-        } while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN);
-        if (gnutls_error_is_fatal(res)) {
+            if (gnutls_error_is_fatal(res)) {
             // Again, a fatal error doesn't mean you have to exit, it's just
             // a fatal error for the protocol. You should alert the user, retry,
             // etc.
             error_exit("Fatal error during send.\n");
         }
+        bzero(data, SIZE);
     }
 
     // Tear down the SSL/TLS connection. You could just close the TCP socket,
@@ -318,4 +331,17 @@ char* get_psk() {
     fclose(fp);
     strncpy(psk, str, 129);
     return psk;
+}
+
+void send_file(FILE *fp, int sockfd){
+  int n;
+  char data[SIZE] = {0};
+
+  while(fgets(data, SIZE, fp) != NULL) {
+    if (send(sockfd, data, sizeof(data), 0) == -1) {
+      perror("[-]Error in sending file.");
+      exit(1);
+    }
+    bzero(data, SIZE);
+  }
 }
