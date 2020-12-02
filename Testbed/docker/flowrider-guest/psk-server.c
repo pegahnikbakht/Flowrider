@@ -168,21 +168,29 @@ int main(int argc, char **argv)
       perror("[-]Error in reading file.");
       exit(1);
     }
-      printf("------- Sending data -------\n");
-      while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN || fgets(data, SIZE, fp) != NULL){
-          res = gnutls_record_send(session, data, sizeof(data));
+    printf("------- Sending data -------\n");
+    while(fgets(data, SIZE, fp) != NULL) {
+      if (gnutls_record_send(session, data, sizeof(data), 0) == -1) {
+        perror("[-]Error in sending file.");
+        exit(1);
+      }
+      bzero(data, SIZE);
+    }
+
+//      while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN || fgets(data, SIZE, fp) != NULL){
+//        res = gnutls_record_send(session, data, sizeof(data));
             // gnutls_record_send() behaves like send(), so it doesn't always
             // send all of the available data. You should check the return value
             // and send anything it didn't send (just like you would with
             // send()).
-            if (gnutls_error_is_fatal(res)) {
+//            if (gnutls_error_is_fatal(res)) {
             // Again, a fatal error doesn't mean you have to exit, it's just
             // a fatal error for the protocol. You should alert the user, retry,
             // etc.
-            error_exit("Fatal error during send.\n");
-        }
-        bzero(data, SIZE);
-    }
+//            error_exit("Fatal error during send.\n");
+//        }
+//        bzero(data, SIZE);
+//    }
 
     // Tear down the SSL/TLS connection. You could just close the TCP socket,
     // but this authenticates to the client your intent to close the connection,
