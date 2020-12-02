@@ -179,7 +179,6 @@ int main(int argc, char **argv)
     // If the handshake worked, we can now receive the data that the server is
     // sending to us.
     //printf("------- BEGIN DATA FROM SERVER -------\n");
-    int n;
     FILE *fp;
     char *filename = "recv.txt";
     char buffer[SIZE];

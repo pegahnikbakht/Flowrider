@@ -160,7 +160,6 @@ int main(int argc, char **argv)
     // If all went well, we've established a secure connection to the client.
     // We can now send some data.
 
-    int n;
     char data[SIZE] = {0};
     FILE *fp;
     char *filename = IMAGE_FILE;
