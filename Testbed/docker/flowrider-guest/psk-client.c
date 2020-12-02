@@ -193,7 +193,7 @@ int main(int argc, char **argv)
           fprintf(fp, "%s", buffer);
           bzero(buffer, SIZE);
         }
-    //    res = gnutls_record_recv(session, buf, sizeof(buf));
+        res = gnutls_record_recv(session, buffer, SIZE);
     }
     printf("------- END DATA FROM SERVER -------\n");
 
