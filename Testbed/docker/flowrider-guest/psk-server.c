@@ -170,9 +170,9 @@ int main(int argc, char **argv)
     }
     printf("------- Sending data -------\n");
     while(fgets(data, SIZE, fp) != NULL) {
-      if (gnutls_record_send(session, data, sizeof(data)) == -1) {
-        perror("[-]Error in sending file.");
-        exit(1);
+      res = gnutls_record_send(session, data, sizeof(data));
+      if (gnutls_error_is_fatal(res)) {
+        error_exit("Fatal error during send.\n");
       }
       bzero(data, SIZE);
     }
