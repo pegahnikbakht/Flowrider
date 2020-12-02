@@ -49,7 +49,7 @@
 #define LOG_LEVEL 9
 
 // File name for the image to be transferred
-#define IMAGE_FILE "receive.jpg";
+#define IMAGE_FILE "send.jpg";
 #define SIZE 1024
 
 int make_one_connection(const char *address, int port);
@@ -178,24 +178,24 @@ int main(int argc, char **argv)
 
     // If the handshake worked, we can now receive the data that the server is
     // sending to us.
-    printf("------- BEGIN DATA FROM SERVER -------\n");
+  printf("------- BEGIN SEND DATA TO SERVER -------\n");
+    char data[SIZE] = {0};
     FILE *fp;
     char *filename = IMAGE_FILE;
-    char buffer[SIZE];
-    fp = fopen(filename, "w");
-    res = gnutls_record_recv(session, buffer, SIZE);
-    while (res != 0) {
-        if (res == GNUTLS_E_REHANDSHAKE) {
-            error_exit("Peer wants to re-handshake but we don't support that.\n");
-        } else if (gnutls_error_is_fatal(res)) {
-            error_exit("Fatal error during read.\n");
-        } else if (res > 0) {
-          fprintf(fp, "%s", buffer);
-          bzero(buffer, SIZE);
-        }
-        res = gnutls_record_recv(session, buffer, SIZE);
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+      perror("[-]Error in reading file.");
+      exit(1);
     }
-    printf("------- END DATA FROM SERVER -------\n");
+    printf("------- Sending data -------\n");
+    while(fgets(data, SIZE, fp) != NULL) {
+      res = gnutls_record_send(session, data, sizeof(data));
+      if (gnutls_error_is_fatal(res)) {
+        error_exit("Fatal error during send.\n");
+      }
+      bzero(data, SIZE);
+    }
+    printf("------- END SEND DATA TO SERVER -------\n");
 
     // Tear down the SSL/TLS connection. You could just close the TCP socket,
     // but this authenticates to the client your intent to close the connection,

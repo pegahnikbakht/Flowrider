@@ -41,7 +41,7 @@
 #define PSK_CONFIG "./psk.txt"
 
 // File name for the image to be transferred
-#define IMAGE_FILE "send.jpg";
+#define IMAGE_FILE "receive.jpg";
 
 // This is the port number that the server will listen on.
 #define PORT 8082
@@ -160,37 +160,22 @@ int main(int argc, char **argv)
     // If all went well, we've established a secure connection to the client.
     // We can now send some data.
 
-    char data[SIZE] = {0};
     FILE *fp;
     char *filename = IMAGE_FILE;
-    fp = fopen(filename, "r");
-    if (fp == NULL) {
-      perror("[-]Error in reading file.");
-      exit(1);
+    char buffer[SIZE];
+    fp = fopen(filename, "w");
+    res = gnutls_record_recv(session, buffer, SIZE);
+    while (res != 0) {
+        if (res == GNUTLS_E_REHANDSHAKE) {
+            error_exit("Peer wants to re-handshake but we don't support that.\n");
+        } else if (gnutls_error_is_fatal(res)) {
+            error_exit("Fatal error during read.\n");
+        } else if (res > 0) {
+          fprintf(fp, "%s", buffer);
+          bzero(buffer, SIZE);
+        }
+        res = gnutls_record_recv(session, buffer, SIZE);
     }
-    printf("------- Sending data -------\n");
-    while(fgets(data, SIZE, fp) != NULL) {
-      res = gnutls_record_send(session, data, sizeof(data));
-      if (gnutls_error_is_fatal(res)) {
-        error_exit("Fatal error during send.\n");
-      }
-      bzero(data, SIZE);
-    }
-
-//      while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN || fgets(data, SIZE, fp) != NULL){
-//        res = gnutls_record_send(session, data, sizeof(data));
-            // gnutls_record_send() behaves like send(), so it doesn't always
-            // send all of the available data. You should check the return value
-            // and send anything it didn't send (just like you would with
-            // send()).
-//            if (gnutls_error_is_fatal(res)) {
-            // Again, a fatal error doesn't mean you have to exit, it's just
-            // a fatal error for the protocol. You should alert the user, retry,
-            // etc.
-//            error_exit("Fatal error during send.\n");
-//        }
-//        bzero(data, SIZE);
-//    }
 
     // Tear down the SSL/TLS connection. You could just close the TCP socket,
     // but this authenticates to the client your intent to close the connection,
