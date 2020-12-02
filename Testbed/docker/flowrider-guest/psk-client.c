@@ -46,7 +46,7 @@
 // The TCP port number that the server is running on, which we will connect to.
 #define SERVER_PORT 8082
 // GnuTLS log level. 9 is the most verbose.
-#define LOG_LEVEL 0
+#define LOG_LEVEL 9
 
 // File name for the image to be transferred
 #define IMAGE_FILE "receive.jpg";
@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 
     // If the handshake worked, we can now receive the data that the server is
     // sending to us.
-    //printf("------- BEGIN DATA FROM SERVER -------\n");
+    printf("------- BEGIN DATA FROM SERVER -------\n");
     FILE *fp;
     char *filename = "recv.txt";
     char buffer[SIZE];
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
         }
     //    res = gnutls_record_recv(session, buf, sizeof(buf));
     }
-    //printf("------- END DATA FROM SERVER -------\n");
+    printf("------- END DATA FROM SERVER -------\n");
 
     // Tear down the SSL/TLS connection. You could just close the TCP socket,
     // but this authenticates to the client your intent to close the connection,

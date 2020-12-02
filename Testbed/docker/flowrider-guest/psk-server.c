@@ -46,7 +46,7 @@
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
-#define LOG_LEVEL 0
+#define LOG_LEVEL 9
 #define SIZE 1024
 
 
@@ -168,6 +168,7 @@ int main(int argc, char **argv)
       perror("[-]Error in reading file.");
       exit(1);
     }
+      printf("------- Sending data -------\n");
       while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN || fgets(data, SIZE, fp) != NULL){
           res = gnutls_record_send(session, data, sizeof(data));
             // gnutls_record_send() behaves like send(), so it doesn't always
