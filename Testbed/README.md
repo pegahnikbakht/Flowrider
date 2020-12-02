@@ -63,11 +63,12 @@ You will need several terminals:
 
   * flowrider_h2 - terminal 1
 
-        docker attach flowrider_h1
+        docker attach flowrider_h2
         cd /endpoint
         python keyserver.py
 
 * flowrider_h2 - terminal 2
+
         docker exec -it flowrider_h2 /bin/bash
         cd /endpoint
         ./psk-server
@@ -78,7 +79,7 @@ You will need several terminals:
         python keyserver.py
 
 * flowrider_h1 - terminal 2
-        docker exec -it flowrider_h2 /bin/bash
+        docker exec -it flowrider_h1 /bin/bash
         cd /endpoint
         ./psk-client
 

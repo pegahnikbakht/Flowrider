@@ -226,16 +226,16 @@ class FlowRider(app_manager.RyuApp):
     fpkt = pkt.get_protocol(tcp.tcp)
 # TWO options follow - choose depending on the implementation!
 # PKI Implementation
-    self.push_packet_back(ev)
+#    self.push_packet_back(ev)
 # PSK Implementation
-#    if (ip.src==client) and (ip.dst==server) and (fpkt.bits==0x002):
-#        self.logger.info("FlowRider TCP packet, sending out keys")
-#        key = self.make_key()
-#        self.send_key(key, client)
-#        self.send_key(key, server)
-#        self.push_packet_back(ev)
-#    else:
-#        self.push_packet_back(ev)
+    if (ip.src==client) and (ip.dst==server) and (fpkt.bits==0x002):
+        self.logger.info("FlowRider TCP packet, sending out keys")
+        key = self.make_key()
+        self.send_key(key, client)
+        self.send_key(key, server)
+        self.push_packet_back(ev)
+    else:
+        self.push_packet_back(ev)
 
    # Send key when triggered
   def send_key(self, key, HOST):
