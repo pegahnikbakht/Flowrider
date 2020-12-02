@@ -331,16 +331,3 @@ char* get_psk() {
     strncpy(psk, str, 129);
     return psk;
 }
-
-void send_file(FILE *fp, int sockfd){
-  int n;
-  char data[SIZE] = {0};
-
-  while(fgets(data, SIZE, fp) != NULL) {
-    if (send(sockfd, data, sizeof(data), 0) == -1) {
-      perror("[-]Error in sending file.");
-      exit(1);
-    }
-    bzero(data, SIZE);
-  }
-}
