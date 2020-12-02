@@ -34,6 +34,10 @@
 // GnuTLS!
 #include <gnutls/gnutls.h>
 
+// images
+#include <iostream>
+#include <fstream>
+
 // This is the secret key that must be shared (over a secure channel!) between
 // the client and server. Obviously in a real application it should be in
 // a configuration file or something and not built-in constant. It also
@@ -152,17 +156,18 @@ int main(int argc, char **argv)
 
     // If all went well, we've established a secure connection to the client.
     // We can now send some data.
-    int i;
-    char buf[100];
-    for (i = 1; i <= 10; i++) {
-        sprintf(buf, "Server %d\r\n", i);
-        do {
+    // int i;
+    //char buf[100];
+    //for (i = 1; i <= 10; i++) {
+    //    sprintf(buf, "Server %d\r\n", i);
+    //    do {
             // gnutls_record_send() behaves like send(), so it doesn't always
             // send all of the available data. You should check the return value
             // and send anything it didn't send (just like you would with
             // send()).
-            res = gnutls_record_send(session, buf, strlen(buf));
-        } while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN);
+    //        res = gnutls_record_send(session, buf, strlen(buf));
+    //    } while (res == GNUTLS_E_INTERRUPTED || res == GNUTLS_E_AGAIN);
+        res = send_image(&session)
         if (gnutls_error_is_fatal(res)) {
             // Again, a fatal error doesn't mean you have to exit, it's just
             // a fatal error for the protocol. You should alert the user, retry,
@@ -319,3 +324,67 @@ char* get_psk() {
     strncpy(psk, str, 129);
     return psk;
 }
+
+
+int send_image(gnutls_session_t * session){
+
+   FILE *picture;
+   int size, read_size, stat, packet_index;
+   char send_buffer[10240], read_buffer[256];
+   packet_index = 1;
+
+   picture = fopen("capture.jpeg", "r");
+   printf("Getting Picture Size\n");
+
+   if(picture == NULL) {
+        printf("Error Opening Image File"); }
+
+   fseek(picture, 0, SEEK_END);
+   size = ftell(picture);
+   fseek(picture, 0, SEEK_SET);
+   printf("Total Picture size: %i\n",size);
+
+   //Send Picture Size
+   printf("Sending Picture Size\n");
+   write(socket, (void *)&size, sizeof(int));
+
+   //Send Picture as Byte Array
+   printf("Sending Picture as Byte Array\n");
+
+   do { //Read while we get errors that are due to signals.
+      stat=read(socket, &read_buffer , 255);
+      printf("Bytes read: %i\n",stat);
+   } while (stat < 0);
+
+   printf("Received data in socket\n");
+   printf("Socket data: %c\n", read_buffer);
+
+   while(!feof(picture)) {
+   //while(packet_index = 1){
+      //Read from the file into our send buffer
+      read_size = fread(send_buffer, 1, sizeof(send_buffer)-1, picture);
+
+      //Send data through our socket
+      do{
+        stat = gnutls_record_send(session, send_buffer, read_size);
+      }while (stat == GNUTLS_E_INTERRUPTED || stat == GNUTLS_E_AGAIN);
+      if (gnutls_error_is_fatal(stat)) {
+          // Again, a fatal error doesn't mean you have to exit, it's just
+          // a fatal error for the protocol. You should alert the user, retry,
+          // etc.
+          error_exit("Fatal error during send.\n");
+      }
+//      while (stat < 0);
+
+      printf("Packet Number: %i\n",packet_index);
+      printf("Packet Size Sent: %i\n",read_size);
+      printf(" \n");
+      printf(" \n");
+
+
+      packet_index++;
+
+      //Zero out our send buffer
+      bzero(send_buffer, sizeof(send_buffer));
+     }
+    }
