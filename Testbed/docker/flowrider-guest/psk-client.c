@@ -46,7 +46,7 @@
 // The TCP port number that the server is running on, which we will connect to.
 #define SERVER_PORT 8082
 // GnuTLS log level. 9 is the most verbose.
-#define LOG_LEVEL 9
+#define LOG_LEVEL 1
 
 // File name for the image to be transferred
 #define IMAGE_FILE "send.jpg";

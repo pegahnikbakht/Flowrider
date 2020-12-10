@@ -46,7 +46,7 @@
 // This is the port number that the server will listen on.
 #define PORT 8082
 // GnuTLS log level. 9 is the most verbose.
-#define LOG_LEVEL 9
+#define LOG_LEVEL 1
 #define SIZE 1024
 
 
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
     // Finally, tear down GnuTLS's global state.
     gnutls_global_deinit();
 
-    printf("All done!\n");
+    printf("Data received!\n");
 }
     return 0;
 }
