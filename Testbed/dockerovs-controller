@@ -9,7 +9,7 @@
 #
 # but stripped down for our use case, and with more string protection.
 #
-# Written by Nicolae Paladi <nicolae.paladi@ri.se>, 2020-03-13
+# Maintained by Nicolae Paladi <nicolae.paladi@eit.lth.se>, 2020-03-13
 #----------------------------------------------------------------------------
 
 set -e            # Give up on errors
