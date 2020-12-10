@@ -1,5 +1,5 @@
 #!/bin/sh
-   tokenQuery=`curl -s -X POST https://app.debricked.com/api/login_check -d _username=nicolae.paladi@eit.lth.se -d _password=$1`
+   tokenQuery=`curl -s -X POST https://app.debricked.com/api/login_check -d _username=nicolae.paladi@eit.lth.se -d _password=3a7b309ac6490c45689ba5b5acd7e6d4b8edacdd`
    sleep 1
    token=`echo $tokenQuery | sed s/'{"token":"'//g | sed s/'"}'//g`
    echo "Token is \n $token"

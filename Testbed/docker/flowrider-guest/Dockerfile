@@ -3,7 +3,7 @@
 #
 
 
-FROM ubuntu:18.04
+FROM occlum/occlum:0.18.0-ubuntu18.04
 
 RUN apt-get update
 Run apt-get install -qy  dnsutils iputils-ping netcat ipython
