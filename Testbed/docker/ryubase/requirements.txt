@@ -2,7 +2,7 @@ ryu==3.12
 msgpack-python==0.4.2
 tinyrpc==0.5
 pbr==0.7.0
-py==1.4.20
+py==1.10.0
 six==1.5.2
 oslo.config==1.2.1
 eventlet==0.13.0
